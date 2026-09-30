@@ -1,12 +1,14 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { EventEmitter } from 'node:events';
+import { createHash } from 'node:crypto';
 import type { PageRecord, Publication } from '../../../../packages/contracts';
 import type { Translator } from '../../../../packages/i18n';
 import { DomainError, isErrno } from '../domain/errors';
 import { buildNavigation } from '../domain/navigation';
 import { MarkdownRenderer } from '../domain/markdown';
 import { atomicWrite, readJson, scanMarkdown, serialize } from '../infrastructure/filesystem';
+import { ImageFiles } from '../infrastructure/image-files';
 
 export const publicationPath = (root: string): string => path.join(root, '.wiki', 'publication.json');
 
@@ -14,13 +16,17 @@ export class Publisher {
   constructor(private readonly root: string, private readonly renderer: MarkdownRenderer, private readonly locale: string) {}
   async publish(pages: PageRecord[], revision: string): Promise<void> {
     const paths = await scanMarkdown(this.root);
+    const images = await new ImageFiles(this.root).index();
     const snapshot: Publication = {
       schema: 1, revision, publishedAt: new Date().toISOString(), navigation: buildNavigation(paths, this.locale),
       pages: pages.filter(page => !page.deleted).map(page => ({
         id: page.id, path: page.path, aliases: page.aliases, revision: page.revision,
-        ...this.renderer.render(page.content, page.path)
+        ...this.renderer.render(page.content, page.path, images)
       }))
     };
+    // Rendering can change after an image is added or the renderer is upgraded,
+    // even when the Markdown commit is unchanged.
+    snapshot.revision += ':' + createHash('sha256').update(JSON.stringify({ navigation: snapshot.navigation, pages: snapshot.pages })).digest('hex');
     const internal = path.join(this.root, '.wiki');
     const stat = await fs.lstat(internal).catch((error: unknown) => { if (!isErrno(error, 'ENOENT')) throw error; });
     if (stat?.isSymbolicLink()) throw new DomainError('error.symbolicLink', 400, { path: '.wiki' });

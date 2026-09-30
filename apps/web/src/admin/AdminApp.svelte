@@ -11,12 +11,14 @@
   import HistoryView from './HistoryView.svelte';
   import DeletedPages from './DeletedPages.svelte';
   import { AdminClient } from './admin-client';
+  import { ImagePicker } from './image-picker';
   import './admin.css';
 
   let { config }: { config: PublicConfig } = $props();
   const initialConfig = untrack(() => config);
   const t = createTranslator(initialConfig.locale, initialConfig.messages);
   const client = new AdminClient(initialConfig.basePath + '/api');
+  const imagePicker = new ImagePicker();
   const route = new StandaloneRoute(initialConfig.basePath);
   let view = $state<'read' | 'edit' | 'history' | 'deleted'>('read');
   let current = $state<PageResponse | null>(null);
@@ -29,6 +31,18 @@
   let notice = $state('');
   let action = $state<'move' | 'delete' | null>(null);
   let refreshKey = $state(0);
+  let pickingImage = false;
+  async function repairImage(page: PageResponse, occurrence: number) {
+    if (pickingImage) return;
+    pickingImage = true; error = null; notice = '';
+    try {
+      const selected = await imagePicker.choose(t, text => notice = text);
+      if (!selected) return;
+      await client.repairImage(page.id, { ...selected, revision: page.revision, occurrence });
+      notice = t('image.saved'); refreshKey++;
+    } catch (failure) { error = errorDetail(failure); }
+    finally { pickingImage = false; }
+  }
   function canLeave() { return !dirty || confirm(t('editor.discard')); }
   function close() { if (canLeave()) { view = 'read'; dirty = false; external = false; } }
   function navigate(path: string, hash?: string, replace?: boolean) {
@@ -83,6 +97,7 @@
 
 <AppShell {config} {t} admin onHome={() => navigate('home.md')}>
   <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} {toolbar} {refreshKey}
+    onImagePick={repairImage}
     body={view === 'read' ? undefined : workspace} onNavigate={navigate}
     onPublication={() => { if (view === 'edit') external = true; }}
     onPage={page => { current = page; document.title = page ? `${page.title} · ${config.brand.name}` : config.brand.name; }} />

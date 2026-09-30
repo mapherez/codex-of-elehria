@@ -41,6 +41,11 @@ export const createPageSchema = z.object({ path: z.string(), content: z.string()
 export const savePageSchema = z.object({ content: z.string(), revision: z.string(), message: summary });
 export const movePageSchema = z.object({ path: z.string(), revision: z.string(), message: summary });
 export const deletePageSchema = z.object({ revision: z.string(), message: summary });
+export const repairImageSchema = z.object({
+  revision: z.string(), occurrence: z.number().int().nonnegative(),
+  path: z.string().optional(), name: z.string().min(1), sha256: z.string().regex(/^[a-f0-9]{64}$/)
+});
+export type RepairImageInput = z.infer<typeof repairImageSchema>;
 export type CreatePageInput = z.infer<typeof createPageSchema>;
 export type SavePageInput = z.infer<typeof savePageSchema>;
 export type MovePageInput = z.infer<typeof movePageSchema>;

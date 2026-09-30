@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import lockfile from 'proper-lockfile';
-import type { CreatePageInput, DeletePageInput, MovePageInput, MutationResult, PageRecord, SavePageInput } from '../../../../packages/contracts';
+import type { CreatePageInput, DeletePageInput, MovePageInput, MutationResult, PageRecord, RepairImageInput, SavePageInput } from '../../../../packages/contracts';
 import type { Translator } from '../../../../packages/i18n';
 import { DomainError } from '../domain/errors';
 import { relocateLinks } from '../domain/markdown';
@@ -10,6 +10,8 @@ import { ContentFiles } from '../infrastructure/content-files';
 import { GitRepository } from '../infrastructure/git-repository';
 import { atomicWrite, exists, readJson, safeFile, serialize } from '../infrastructure/filesystem';
 import { Publisher } from './publication';
+import { ImageFiles } from '../infrastructure/image-files';
+import { wikiImages } from '../domain/wiki-images';
 
 interface Journal { beforeHead: string | null; before: PageRecord[]; after: PageRecord[]; message: string }
 
@@ -120,6 +122,22 @@ export class WikiService {
       if (page.content === input.content) return { page, unchanged: true };
       page.content = input.content;
       return this.persist(page, this.t('git.save', { path: page.path }), input.message);
+    });
+  }
+  repairImage(id: string, input: RepairImageInput): Promise<MutationResult> {
+    return this.serializeMutation(async () => {
+      const page = this.editable(id, input.revision);
+      const embed = wikiImages(page.content)[input.occurrence];
+      if (!embed) throw new DomainError('error.invalidRequest');
+      const file = await new ImageFiles(this.files.directory).selected(input);
+      const encoded = file.split('/').map(encodeURIComponent).join('/');
+      // A root-level path needs ./ to distinguish it from a recursive basename lookup.
+      const reference = file.includes('/') ? encoded : './' + encoded;
+      const next = page.content.slice(0, embed.start) + `![[${reference}${embed.suffix}]]` + page.content.slice(embed.end);
+      if (next === page.content) return { page, unchanged: true };
+      this.files.validateContent(next);
+      page.content = next;
+      return this.persist(page, this.t('git.image', { path: page.path }));
     });
   }
   move(id: string, input: MovePageInput): Promise<MutationResult> {

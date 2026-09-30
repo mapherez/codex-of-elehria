@@ -9,10 +9,11 @@
   import Article from './Article.svelte';
   import './reader.css';
 
-  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, toolbar, body, hash = '', refreshKey = 0 }: {
+  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, toolbar, body, hash = '', refreshKey = 0 }: {
     apiBase: string; basePath?: string; path?: string; hash?: string; refreshKey?: number; t: Translator;
     onNavigate: (path: string, hash?: string, replace?: boolean) => void;
     onPage?: (page: PageResponse | null) => void; onPublication?: () => void;
+    onImagePick?: (page: PageResponse, occurrence: number) => Promise<void>;
     toolbar?: Snippet<[PageResponse | null]>; body?: Snippet;
   } = $props();
   const model = new ReaderModel(() => apiBase, () => onPublication?.());
@@ -106,7 +107,7 @@
           <TableOfContents headings={model.page.headings} active={activeHeading} {t} onSelect={jump} />
         </details>
       {/if}
-      <Article page={model.page} {basePath} {apiBase} onNavigate={navigate} onHeading={jump} onElement={element => { article = element; }} />
+      <Article page={model.page} {basePath} {apiBase} {t} {onImagePick} onNavigate={navigate} onHeading={jump} onElement={element => { article = element; }} />
     {/if}
   </main>
   {#if model.page?.headings.length && !body && !model.error}

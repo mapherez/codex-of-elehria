@@ -86,6 +86,16 @@ Save publishes immediately after committing. Text in the editor is private until
 
 History is available only in the local workspace, including for deleted pages. View original Markdown or rendered versions and compare any two revisions. Restoring from the UI is not included.
 
+### Obsidian images
+
+Place image assets in `dist/_images/` or its subfolders. `![[photo.png]]` searches that entire tree by filename; exactly one match renders automatically. A reference with a path, such as `![[places/photo.png]]`, is relative to `_images` and resolves only that exact file. Use `![[./photo.png]]` to explicitly select a root-level image when another subfolder contains the same name. Matching is case-sensitive. Optional dimensions such as `![[photo.png|400]]` and `![[photo.png|400x300]]` are supported. Examples inside code blocks, inline code and escaped embeds remain literal. Note links and note embeds using Obsidian syntax are not included yet.
+
+Missing or ambiguous images show a small warning icon. In the admin, click it to choose the correct existing image with the system file picker. In browsers supporting directory selection, the first click asks you to select the host `_images` folder; click the icon again to choose an image. That folder is remembered for the current app session. The selected relative path and file contents are validated against the server's `_images` folder. Selecting another directory or a file outside it cannot publish a reference.
+
+Other browsers use the standard native file picker and match the chosen file by name and SHA-256. If identical files exist at multiple paths, that fallback cannot determine the selected path: use a browser with directory selection support or edit the explicit Markdown path. No file is uploaded. Canceling a picker leaves the note unchanged.
+
+Choosing a valid image updates only the clicked embed, retains its dimensions, commits the correction and updates public browsers. Concurrent note changes are rejected rather than overwritten. Public readers and historical versions have no repair controls. The image index is rebuilt when the admin publishes or starts; assets added later are picked up on the next publication or admin restart. This does not change the restrictions on external Markdown edits or re-import notes.
+
 ## Development and checks
 
 The npm server scripts load the repository-root `.env` automatically when it exists. Set `PUBLIC_PORT` and `ADMIN_PORT` there to choose the local ports, and `SITE_CONFIG_FILE` to choose the site JSON. Existing shell variables override the same variables in `.env`. `PORT`, when explicitly set, overrides the selected app port (Docker uses it for its internal port); leave it unset when using separate public/admin ports. `SITE_CONFIG` remains a legacy fallback for `SITE_CONFIG_FILE`.

@@ -110,3 +110,5 @@
   .codex .prose h1 { font-size: 2.5rem; }
 }
 @media (prefers-reduced-motion: reduce) { .codex * { scroll-behavior: auto !important; } }
+.codex .image-unresolved { display: inline-block; color: var(--codex-muted); }
+.codex .image-repair { display: inline-grid; place-items: center; min-width: 2rem; min-height: 2rem; padding: .2rem .4rem; color: var(--codex-accent); vertical-align: middle; }

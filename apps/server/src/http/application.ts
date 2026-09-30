@@ -9,6 +9,7 @@ import { DomainError } from '../domain/errors';
 import { safeFile } from '../infrastructure/filesystem';
 import { GitRepository } from '../infrastructure/git-repository';
 import { ContentFiles } from '../infrastructure/content-files';
+import { ImageFiles } from '../infrastructure/image-files';
 import { MarkdownRenderer } from '../domain/markdown';
 import { Publisher, PublicationReader } from '../services/publication';
 import { WikiService } from '../services/wiki-service';
@@ -70,7 +71,7 @@ export async function createApplication(config: RuntimeConfig) {
     if (reader.current) res.write(`event: publication\ndata: ${JSON.stringify({ revision: reader.current.revision })}\n\n`);
     req.on('close', () => clients.delete(res));
   });
-  if (wiki) routes.use('/api/admin', adminRoutes(wiki, renderer, token));
+  if (wiki) routes.use('/api/admin', adminRoutes(wiki, renderer, token, new ImageFiles(config.contentDir)));
   routes.get(/^\/media\/(.+)$/, async (req, res) => {
     const relative = String(req.params[0]);
     const type = mediaTypes[path.extname(relative).toLowerCase()];
@@ -79,7 +80,9 @@ export async function createApplication(config: RuntimeConfig) {
     const stat = await fs.stat(file).catch(() => { throw new DomainError('error.notFound', 404); });
     if (!stat.isFile()) throw new DomainError('error.notFound', 404);
     res.set('Content-Security-Policy', "default-src 'none'; sandbox");
-    res.type(type).sendFile(file);
+    // safeFile rejects hidden relative paths; the host mount itself may live
+    // under a hidden directory such as ~/.docker.
+    res.type(type).sendFile(file, { dotfiles: 'allow' });
   });
   routes.use('/assets', express.static(path.join(config.webDir, 'assets'), { dotfiles: 'deny', fallthrough: false, immutable: true, maxAge: '1y' }));
   routes.get(['/', /^\/wiki\/.+/], async (req, res) => {
