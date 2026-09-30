@@ -1,0 +1,31 @@
+name: codex-admin
+services:
+  wiki-admin:
+    build:
+      context: .
+      target: admin
+    image: codex-wiki-admin:local
+    restart: "no"
+    init: true
+    ports:
+      - "127.0.0.1:${ADMIN_PORT:-3001}:3000"
+    environment:
+      ADMIN_ORIGINS: "http://localhost:${ADMIN_PORT:-3001},http://127.0.0.1:${ADMIN_PORT:-3001}"
+    volumes:
+      - type: bind
+        source: ${CONTENT_DIR:-./dist}
+        target: /data/content
+      - type: bind
+        source: ${STATE_DIR:-./state}
+        target: /data/state
+      - type: bind
+        source: ${SITE_CONFIG_FILE:-./config/site.json}
+        target: /app/config/site.json
+        read_only: true
+    networks:
+      - admin
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+networks:
+  admin: {}
