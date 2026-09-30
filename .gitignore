@@ -2,7 +2,7 @@ node_modules/
 .tools/
 .env
 state/
-dist/.wiki/
+/dist/
 output/
 .playwright-cli/
 test-results/

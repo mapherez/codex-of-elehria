@@ -88,6 +88,15 @@ History is available only in the local workspace, including for deleted pages. V
 
 ## Development and checks
 
+The npm server scripts load the repository-root `.env` automatically when it exists. Set `PUBLIC_PORT` and `ADMIN_PORT` there to choose the local ports, and `SITE_CONFIG_FILE` to choose the site JSON. Existing shell variables override the same variables in `.env`. `PORT`, when explicitly set, overrides the selected app port (Docker uses it for its internal port); leave it unset when using separate public/admin ports. `SITE_CONFIG` remains a legacy fallback for `SITE_CONFIG_FILE`.
+
+Stop the Docker services before switching to npm against the same documents and state, especially the admin: only one writer can own that state directory.
+
+```sh
+docker compose -f compose-admin.yml stop
+docker compose -f compose.yml stop
+```
+
 ```sh
 npm ci
 npm run check
@@ -100,7 +109,7 @@ npm start
 
 The public and admin builds have separate entrypoints. The public build does not include the editor or history components. The backend never registers admin API routes in public mode. `build/` contains application assets; `dist/` is reserved for your Markdown.
 
-For UI development, run the admin backend and `npm run dev:ui`; add `http://localhost:5173` to `ADMIN_ORIGINS` on the backend for Vite's proxy. Production never uses Vite's development server. With NVM on Windows, run `nvm use 24` in your own shell before using npm.
+For UI development, run `npm run dev:admin` and `npm run dev:ui` in separate terminals. Vite runs on port 5173 and proxies to the configured `ADMIN_PORT` (or explicit `PORT`). Add `http://localhost:5173` and `http://127.0.0.1:5173` to `ADMIN_ORIGINS` in `.env`, alongside the admin backend origins, then restart the backend. An example is included in `.env.example`. The `dev:public` and `dev:admin` scripts run server source directly; build once first to provide the browser assets when visiting the backend port. Production never uses Vite's development server. With NVM on Windows, run `nvm use 24` in your own shell before using npm.
 
 ## Embedding the reader
 

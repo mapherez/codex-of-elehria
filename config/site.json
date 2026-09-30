@@ -2,7 +2,10 @@
   "locale": "en",
   "brand": { "name": "Codex of Elehria", "logoUrl": null },
   "basePath": "",
-  "gitAuthor": { "name": "Wiki App", "email": "wiki@localhost" },
+  "gitAuthor": {
+    "name": "Lorekeeper",
+    "email": "wiki@localhost"
+  },
   "maxPageBytes": 1048576,
   "publicationPollMs": 500
 }
