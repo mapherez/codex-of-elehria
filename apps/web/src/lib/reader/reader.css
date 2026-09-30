@@ -57,7 +57,7 @@
 .codex .page-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin: -1.2rem 0 1.8rem; }
 .codex .page-toolbar .push { margin-left: auto; }
 .codex .page-toolbar button { font-size: .78rem; }
-.codex .prose { max-width: 76ch; }
+.codex .prose { max-width: none; }
 .codex .prose > :first-child { margin-top: 0; }
 .codex .prose h1 { font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif; font-size: clamp(2.5rem, 4vw, 3.9rem); font-weight: 450; letter-spacing: -.045em; line-height: 1.12; margin-bottom: 1.7rem; color: #f4f0e8; }
 .codex .prose h2 { margin: 3rem 0 1rem; padding-top: .9rem; border-top: 1px solid var(--codex-line); font-size: 1.4rem; font-weight: 600; letter-spacing: -.02em; }
