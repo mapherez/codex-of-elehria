@@ -9,11 +9,15 @@
   const initialConfig = untrack(() => config);
   const t = createTranslator(initialConfig.locale, initialConfig.messages);
   const route = new StandaloneRoute(initialConfig.basePath);
+  const uid = $props.id();
+  const navigationId = uid + '-navigation';
+  let navigationOpen = $state(false);
   onMount(() => route.connect());
 </script>
 
-<AppShell {config} {t} onHome={() => route.navigate('home.md')}>
+<AppShell {config} {t} {navigationId} bind:navigationOpen onHome={() => { navigationOpen = false; route.navigate('home.md'); }}>
   <CodexReader apiBase={config.basePath + '/api'} basePath={config.basePath} path={route.path} hash={route.hash} {t}
+    {navigationId} bind:navigationOpen
     onNavigate={(path, hash, replace) => route.navigate(path, hash, replace)}
     onPage={page => { document.title = page ? `${page.title} · ${config.brand.name}` : config.brand.name; }} />
 </AppShell>

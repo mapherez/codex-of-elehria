@@ -43,4 +43,8 @@
 @media (max-width: 720px) { .codex .workspace-heading { flex-direction: column; } .codex .history-list li { flex-wrap: wrap; } .codex .editor-state { display: none; } }
 .codex .publication-status { font-size: .8rem; color: var(--codex-muted); }
 .codex .publication-status.pending { color: var(--codex-accent); }
-.codex .publication-actions { display: inline-flex; align-items: center; gap: .6rem; margin-inline-start: auto; }
+.codex .admin-actions { display: grid; gap: 1.5rem; }
+.codex .drawer-page-context { display: grid; gap: .4rem; color: var(--codex-muted); font-size: .85rem; padding-bottom: 1.25rem; border-bottom: 1px solid var(--codex-line); }
+.codex .drawer-action-group { display: grid; gap: .65rem; }
+.codex .drawer-action-group + .drawer-action-group { padding-top: 1.5rem; border-top: 1px solid var(--codex-line); }
+.codex .drawer-action-group button { width: 100%; text-align: start; min-height: 44px; }

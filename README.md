@@ -90,6 +90,8 @@ Renaming/moving preserves page identity and old-address aliases, but the public 
 
 History is available only in the local workspace, including for deleted pages. View original Markdown or rendered versions and compare any two revisions. Restoring from the UI is not included.
 
+The admin header opens a right-hand drawer with page and workspace actions. Save and Cancel appear there while editing. On desktop this drawer has no overlay. On mobile, the header centers the configured brand and omits the subtitle; a left hamburger opens navigation and the right chevron opens admin actions. Each mobile drawer occupies 92% of the screen, dims the page and closes by tapping outside, swiping toward its edge, using Close or pressing Escape. The public header has no admin controls or mode label.
+
 ### Obsidian images
 
 Place image assets in `dist/_images/` or its subfolders. `![[photo.png]]` searches that entire tree by filename; exactly one match renders automatically. A reference with a path, such as `![[places/photo.png]]`, is relative to `_images` and resolves only that exact file. Use `![[./photo.png]]` to explicitly select a root-level image when another subfolder contains the same name. Matching is case-sensitive. Optional dimensions such as `![[photo.png|400]]` and `![[photo.png|400x300]]` are supported. Examples inside code blocks, inline code and escaped embeds remain literal. Note embeds are not included.
@@ -141,15 +143,31 @@ The reusable entrypoint is `apps/web/src/lib/reader/index.ts`. `CodexReader` acc
 
 The reader does not manipulate browser history or the document title. The standalone app owns those responsibilities. Reader styles are scoped beneath `.codex`, with CSS custom properties for theme and header offset. SSE and pending requests are cleaned up when the reader is destroyed. For a separate API origin, configure an explicit same-origin proxy in the host application; broad CORS is intentionally not enabled.
 
+The host supplies the mobile navigation trigger. Bind `navigationOpen` and pass a matching `navigationId` to connect that trigger to the reader's drawer. Set `--codex-top` to the host header's height.
+
 Example within another Svelte application:
 
 ```svelte
+<script lang="ts">
+  let navigationOpen = $state(false);
+  const uid = $props.id();
+  const navigationId = uid + '-navigation';
+</script>
+
+<button
+  aria-label={translate(navigationOpen ? 'nav.close' : 'nav.open')}
+  aria-expanded={navigationOpen}
+  aria-controls={navigationId}
+  onclick={() => navigationOpen = !navigationOpen}
+>{translate(navigationOpen ? 'nav.close' : 'nav.open')}</button>
 <CodexReader
   apiBase={settings.apiBase}
   basePath={settings.basePath}
   path={selectedDocument}
   t={translate}
   onNavigate={navigateToDocument}
+  {navigationId}
+  bind:navigationOpen
 />
 ```
 

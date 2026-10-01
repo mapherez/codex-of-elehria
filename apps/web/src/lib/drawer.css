@@ -1,0 +1,34 @@
+.codex.side-drawer {
+  position: fixed; inset: 0 0 0 auto; z-index: 50; margin: 0; padding: 0;
+  width: min(24rem, 100vw); height: 100dvh; min-height: 0; max-height: none; max-width: none;
+  border: 0; background: transparent; overflow: hidden; display: none;
+}
+.codex.side-drawer[open] { display: block; }
+.codex.side-drawer.left { inset: 0 auto 0 0; }
+.codex.side-drawer::backdrop { background: rgb(0 0 0 / calc(.6 * var(--drawer-fade, 1))); }
+.side-drawer .drawer-scroller { height: 100%; }
+.side-drawer .drawer-sheet {
+  height: 100%; padding: max(1.25rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+  overflow-y: auto; overscroll-behavior-y: contain; background: var(--codex-bg);
+  border-inline-start: 1px solid var(--codex-line); box-shadow: -12px 0 40px #0004;
+}
+.side-drawer.left .drawer-sheet { border-inline-start: 0; border-inline-end: 1px solid var(--codex-line); }
+.side-drawer .drawer-heading { display: flex; align-items: center; gap: 1rem; justify-content: space-between; margin-bottom: 2rem; }
+.side-drawer .drawer-heading h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+.side-drawer .drawer-close { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: .5rem; }
+.side-drawer svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.side-drawer .drawer-navigation { padding-bottom: 1rem; }
+.side-drawer .drawer-navigation > a { display: block; margin: 0 .6rem 1rem; text-decoration: none; }
+.codex.side-drawer.mobile { inset: 0; width: 100dvw; }
+.side-drawer.mobile .drawer-scroller {
+  display: grid; grid-template-columns: 100% 92dvw; overflow-x: auto; overflow-y: hidden;
+  overscroll-behavior: none; scrollbar-width: none; scroll-snap-type: x mandatory;
+}
+.side-drawer.mobile .drawer-scroller::-webkit-scrollbar { display: none; }
+.side-drawer.mobile .drawer-scroller::before { content: ''; scroll-snap-align: start; }
+.side-drawer.mobile .drawer-sheet { width: 92dvw; scroll-snap-align: end; }
+.side-drawer.mobile.left .drawer-scroller { grid-template-columns: 92dvw 100%; }
+.side-drawer.mobile.left .drawer-scroller::before { display: none; }
+.side-drawer.mobile.left .drawer-scroller::after { content: ''; scroll-snap-align: end; }
+.side-drawer.mobile.left .drawer-sheet { scroll-snap-align: start; }
+@media (prefers-reduced-motion: reduce) { .side-drawer .drawer-scroller { scroll-behavior: auto; } }

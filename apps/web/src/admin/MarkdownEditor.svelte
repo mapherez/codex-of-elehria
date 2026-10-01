@@ -1,14 +1,16 @@
 <script lang="ts">
-  import { untrack } from 'svelte';
+  import { onDestroy, untrack } from 'svelte';
   import type { ApiError, MutationResult, PageRecord } from '../../../../packages/contracts';
   import type { Translator } from '../../../../packages/i18n';
   import type { AdminClient } from './admin-client';
   import { errorDetail } from '../lib/api';
-  let { page, client, t, changedElsewhere, onSaved, onCancel, onDirty }: {
+  let { page, client, t, changedElsewhere, onSaved, onCancel, onDirty, onControls }: {
     page: PageRecord | null; client: AdminClient; t: Translator; changedElsewhere: boolean;
     onSaved: (result: MutationResult) => void; onCancel: () => void; onDirty: (dirty: boolean) => void;
+    onControls?: (controls: { save: () => void; busy: boolean } | null) => void;
   } = $props();
   const initial = untrack(() => page);
+  let form = $state<HTMLFormElement>();
   let content = $state(initial?.content || '');
   let file = $state(initial?.path || '');
   let revision = $state(initial?.revision || '');
@@ -18,6 +20,8 @@
   let current = $state<PageRecord | null>(null);
   const dirty = $derived(content !== (initial?.content || '') || file !== (initial?.path || '') || Boolean(summary));
   $effect(() => onDirty(dirty));
+  $effect(() => { if (form) onControls?.({ save: () => form?.requestSubmit(), busy }); });
+  onDestroy(() => onControls?.(null));
   async function save(event: SubmitEvent) {
     event.preventDefault(); busy = true; error = null;
     try {
@@ -28,12 +32,12 @@
   }
 </script>
 
-<form class="editor" onsubmit={save}>
-  <div class="editor-actions">
+<form class="editor" bind:this={form} onsubmit={save}>
+  {#if !onControls}<div class="editor-actions">
     <button class="primary" type="submit" disabled={busy}>{t(busy ? 'editor.saving' : 'action.save')}</button>
     <button type="button" onclick={onCancel} disabled={busy}>{t('action.cancel')}</button>
     <span class="muted editor-state" role="status">{dirty ? t('editor.pending') : ''}</span>
-  </div>
+  </div>{/if}
   <h1 class="workspace-title">{t(initial ? 'editor.title' : 'editor.new')}</h1>
   {#if changedElsewhere}<p class="notice">{t('editor.external')}</p>{/if}
   {#if error}<p class="notice error" role="alert">{t(error.code, error.params)}</p>{/if}

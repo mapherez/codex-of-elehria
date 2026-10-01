@@ -7,25 +7,28 @@
   import NavigationTree from './NavigationTree.svelte';
   import TableOfContents from './TableOfContents.svelte';
   import Article from './Article.svelte';
+  import Drawer from '../Drawer.svelte';
   import './reader.css';
 
-  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, showLinkWarnings = false, toolbar, body, hash = '', refreshKey = 0 }: {
+  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, showLinkWarnings = false, toolbar, body, hash = '', refreshKey = 0,
+    navigationOpen = $bindable(false), navigationId }: {
     apiBase: string; basePath?: string; path?: string; hash?: string; refreshKey?: number; t: Translator;
     onNavigate: (path: string, hash?: string, replace?: boolean) => void;
     onPage?: (page: PageResponse | null) => void; onPublication?: () => void;
     onImagePick?: (page: PageResponse, occurrence: number) => Promise<void>;
     showLinkWarnings?: boolean;
+    navigationOpen?: boolean; navigationId?: string;
     toolbar?: Snippet<[PageResponse | null]>; body?: Snippet;
   } = $props();
   const model = new ReaderModel(() => apiBase, () => onPublication?.());
   const uid = $props.id();
-  let mobileOpen = $state(false);
   let activeHeading = $state('');
   let article = $state<HTMLElement>();
   let main: HTMLElement;
   let previousPath = '';
   let scrollFrame = 0;
   let navigatePending = false;
+  let pendingNavigation: { file: string; fragment?: string } | null = null;
 
   $effect(() => {
     refreshKey;
@@ -66,7 +69,14 @@
       activeHeading = selected;
     });
   }
-  function navigate(file: string, fragment?: string) { mobileOpen = false; onNavigate(file, fragment); }
+  function navigate(file: string, fragment?: string) {
+    if (navigationOpen) { pendingNavigation = { file, fragment }; navigationOpen = false; }
+    else onNavigate(file, fragment);
+  }
+  function navigationClosed() {
+    const next = pendingNavigation; pendingNavigation = null;
+    if (next) onNavigate(next.file, next.fragment);
+  }
   onMount(() => {
     const disconnect = model.connect();
     return () => { disconnect(); cancelAnimationFrame(scrollFrame); };
@@ -75,10 +85,7 @@
 
 <svelte:window onscroll={updateActive} onresize={updateActive} />
 <div class="codex" class:workspace={Boolean(body)} class:show-link-warnings={showLinkWarnings}>
-  <button class="mobile-nav-button" onclick={() => mobileOpen = !mobileOpen} aria-expanded={mobileOpen} aria-controls={uid + '-nav'}>
-    <span aria-hidden="true">☰</span> {t(mobileOpen ? 'nav.close' : 'nav.open')}
-  </button>
-  <aside id={uid + '-nav'} class="sidebar" class:mobile-open={mobileOpen}>
+  <aside class="sidebar">
     <div class="sidebar-label">{t('nav.title')}</div>
     <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} />
     <div class="sidebar-footer">{t('nav.count', { count: model.count })}</div>
@@ -118,3 +125,10 @@
     </aside>
   {/if}
 </div>
+<Drawer id={navigationId || uid + '-navigation'} title={t('nav.title')} side="left" mobileOnly {t} bind:open={navigationOpen} onClosed={navigationClosed}>
+  <div class="drawer-navigation">
+    <a href={pageUrl('home.md', basePath)} onclick={event => { event.preventDefault(); navigate('home.md'); }}>{t('nav.home')}</a>
+    <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} />
+    <div class="sidebar-footer">{t('nav.count', { count: model.count })}</div>
+  </div>
+</Drawer>

@@ -4,7 +4,7 @@
   import type { Translator } from '../../../../packages/i18n';
   import type { AdminClient } from './admin-client';
   import { errorDetail } from '../lib/api';
-  let { id, client, t, locale, onClose }: { id: string; client: AdminClient; t: Translator; locale: string; onClose: () => void } = $props();
+  let { id, client, t, locale, onClose, showClose = true }: { id: string; client: AdminClient; t: Translator; locale: string; onClose: () => void; showClose?: boolean } = $props();
   let entries = $state<HistoryEntry[]>([]);
   let version = $state<VersionResponse | null>(null);
   let comparison = $state<DiffResponse | null>(null);
@@ -48,7 +48,7 @@
 </script>
 
 <section class="history-view">
-  <div class="workspace-heading"><div><h1 class="workspace-title">{t('history.title')}</h1><p class="muted">{t('history.description')}</p></div><button onclick={onClose}>{t('action.close')}</button></div>
+  <div class="workspace-heading"><div><h1 class="workspace-title">{t('history.title')}</h1><p class="muted">{t('history.description')}</p></div>{#if showClose}<button onclick={onClose}>{t('action.close')}</button>{/if}</div>
   {#if error}<p class="notice error" role="alert">{t(error.code, error.params)}</p>{/if}
   <div class="compare-form">
     <label>{t('history.from')}<select bind:value={from}>{#each entries as entry}<option value={entry.commit}>{date(entry.date)} · {entry.commit.slice(0, 7)}</option>{/each}</select></label>

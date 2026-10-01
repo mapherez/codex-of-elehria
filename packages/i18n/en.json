@@ -1,8 +1,9 @@
 {
   "app.subtitle": "A living collection of knowledge",
   "app.loading": "Opening the codex…",
-  "app.reading": "Reading room",
-  "app.admin": "Local workspace",
+  "admin.actions": "Page actions",
+  "admin.open": "Open page actions",
+  "admin.close": "Close page actions",
   "app.skip": "Skip to content",
   "nav.title": "Explore the codex",
   "nav.label": "Pages",
