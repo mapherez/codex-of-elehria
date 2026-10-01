@@ -1,9 +1,12 @@
 {
   "locale": "en",
-  "brand": { "name": "Codex of Elehria", "logoUrl": null },
+  "brand": {
+    "name": "NoX Wiki",
+    "logoUrl": null
+  },
   "basePath": "",
   "gitAuthor": {
-    "name": "Lorekeeper",
+    "name": "NoX",
     "email": "wiki@localhost"
   },
   "maxPageBytes": 1048576,
