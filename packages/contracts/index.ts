@@ -43,6 +43,8 @@ export interface PublicConfig {
   locale: string; messages: Dictionary; brand: { name: string; logoUrl: string | null }; basePath: string;
 }
 export interface MutationResult { page: PageRecord; unchanged?: boolean }
+export interface PendingPublication { id: string; path: string; revision: string; status: 'draft' | 'changes' }
+export interface PublishBatchResult { count: number }
 
 const summary = z.string().max(500).optional();
 export const createPageSchema = z.object({ path: z.string(), content: z.string(), message: summary });
@@ -50,6 +52,8 @@ export const savePageSchema = z.object({ content: z.string(), revision: z.string
 export const movePageSchema = z.object({ path: z.string(), revision: z.string(), message: summary });
 export const deletePageSchema = z.object({ revision: z.string(), message: summary });
 export const publishPageSchema = z.object({ revision: z.string() });
+export const publishBatchSchema = z.object({ pages: z.array(z.object({ id: z.string().min(1), revision: z.string().min(1) })).min(1).max(10000) });
+export type PublishBatchInput = z.infer<typeof publishBatchSchema>;
 export const previewPageSchema = z.object({ content: z.string(), path: z.string().optional(), id: z.string().optional() });
 export type PreviewPageInput = z.infer<typeof previewPageSchema>;
 export type PublishPageInput = z.infer<typeof publishPageSchema>;

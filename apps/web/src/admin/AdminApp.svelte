@@ -12,6 +12,7 @@
   import DeletedPages from './DeletedPages.svelte';
   import ActionIcon from './ActionIcon.svelte';
   import NoxSyncPanel from './NoxSyncPanel.svelte';
+  import PublishPending from './PublishPending.svelte';
   import { AdminClient } from './admin-client';
   import { ImagePicker } from './image-picker';
   import './admin.css';
@@ -29,8 +30,8 @@
   let pendingAction: (() => void) | null = null;
   let editorControls = $state<{ save: () => void; busy: boolean } | null>(null);
   let view = $state<'read' | 'edit'>('read');
-  let drawerView = $state<'actions' | 'history' | 'deleted' | 'move' | 'delete' | 'nox'>('actions');
-  const drawerTitle = $derived(t(drawerView === 'nox' ? 'nox.title' : drawerView === 'history' ? 'history.title' : drawerView === 'deleted' ? 'history.removedTitle' : drawerView === 'move' ? 'move.title' : drawerView === 'delete' ? 'delete.title' : 'admin.actions'));
+  let drawerView = $state<'actions' | 'history' | 'deleted' | 'move' | 'delete' | 'nox' | 'publish'>('actions');
+  const drawerTitle = $derived(t(drawerView === 'publish' ? 'publication.batchTitle' : drawerView === 'nox' ? 'nox.title' : drawerView === 'history' ? 'history.title' : drawerView === 'deleted' ? 'history.removedTitle' : drawerView === 'move' ? 'move.title' : drawerView === 'delete' ? 'delete.title' : 'admin.actions'));
   let current = $state<PageResponse | null>(null);
   let original = $state<PageRecord | null>(null);
   let historyId = $state('');
@@ -105,6 +106,7 @@
   {#if drawerView === 'history'}
     {#key historyId}<HistoryView id={historyId} {client} {t} locale={config.locale} onClose={() => drawerView = 'actions'} showClose={false} />{/key}
   {:else if drawerView === 'deleted'}<DeletedPages {client} {t} onSelect={history} onClose={() => drawerView = 'actions'} showClose={false} />
+  {:else if drawerView === 'publish'}<PublishPending {client} {t} onPublished={() => refreshKey++} />
   {:else if (drawerView === 'move' || drawerView === 'delete') && current}
     {#key drawerView}<PageAction action={drawerView} page={current} {client} {t} onDone={saved} onClose={() => drawerView = 'actions'} />{/key}
   {:else if drawerView === 'actions'}
@@ -139,6 +141,7 @@
       {@render actionButton('create', t('action.create'), () => runAction(create), editorControls?.busy || publishing)}
       {@render actionButton('deleted', t('action.deleted'), () => { if (canLeave()) drawerView = 'deleted'; }, editorControls?.busy || publishing)}
       {@render actionButton('nox', t('nox.title'), () => { drawerView = 'nox'; }, editorControls?.busy || publishing)}
+      {@render actionButton('publish', t('publication.batchTitle'), () => { if (canLeave()) { view = 'read'; dirty = false; external = false; drawerView = 'publish'; } }, editorControls?.busy || publishing)}
     </div>
   </div>
   {/if}

@@ -67,6 +67,11 @@
 .codex.side-drawer .workspace-heading { display: none; }
 .codex.side-drawer .workspace-title { font-size: 1.1rem; }
 .codex.side-drawer .history-list { max-height: none; }
+.codex .pending-pages { list-style: none; padding: 0; margin-block: 1rem; }
+.codex .pending-pages li { display: flex; align-items: start; justify-content: space-between; gap: 1rem; border-bottom: 1px solid var(--codex-line); padding-block: .75rem; font-size: .85rem; }
+.codex .pending-pages li > span:first-child { overflow-wrap: anywhere; }
+.codex .pending-pages .publication-status { flex-shrink: 0; font-size: .7rem; }
+.codex .publish-pending-controls { position: sticky; bottom: -1.5rem; background: var(--codex-bg); display: flex; flex-wrap: wrap; gap: .6rem; padding-block: 1rem; }
 .codex.side-drawer .history-list li > div { min-width: 0; overflow-wrap: anywhere; }
 .codex.side-drawer .version-controls code { overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) { .codex button.action-row { transition: none; } }

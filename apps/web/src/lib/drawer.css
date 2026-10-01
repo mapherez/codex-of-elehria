@@ -10,9 +10,10 @@
 .side-drawer .drawer-scroller { height: 100%; }
 .side-drawer .drawer-sheet {
   height: 100%; padding: max(1.25rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
-  overflow-y: auto; overscroll-behavior-y: contain; background: var(--codex-bg);
+  overflow-y: scroll; scrollbar-gutter: stable; overscroll-behavior-y: contain; background: var(--codex-bg);
   border-inline-start: 1px solid var(--codex-line); box-shadow: -12px 0 40px #0004;
 }
+@supports (scrollbar-gutter: stable) { .side-drawer .drawer-sheet { overflow-y: auto; } }
 .side-drawer.left .drawer-sheet { border-inline-start: 0; border-inline-end: 1px solid var(--codex-line); }
 .side-drawer .drawer-heading { display: flex; align-items: center; gap: .6rem; justify-content: space-between; margin-bottom: 1.5rem; position: sticky; top: -1.25rem; background: var(--codex-bg); z-index: 2; padding-block: .5rem; }
 .side-drawer .drawer-heading h2 { flex: 1; }

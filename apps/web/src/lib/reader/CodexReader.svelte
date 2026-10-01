@@ -87,7 +87,6 @@
 <svelte:window onscroll={updateActive} onresize={updateActive} />
 <div class="codex" class:workspace={Boolean(body)} class:show-link-warnings={showLinkWarnings}>
   <aside class="sidebar">
-    <div class="sidebar-label">{t('nav.title')}</div>
     <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} />
     <div class="sidebar-footer">{t('nav.count', { count: model.count })}</div>
   </aside>
@@ -129,7 +128,7 @@
 <Drawer id={navigationId || uid + '-navigation'} title={t('nav.title')} side="left" mobileOnly {t} bind:open={navigationOpen} onClosed={navigationClosed}>
   <div class="drawer-navigation">
     <a href={pageUrl('home.md', basePath)} onclick={event => { event.preventDefault(); navigate('home.md'); }}>{t('nav.home')}</a>
-    <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} />
+    <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} showTitle={false} />
     <div class="sidebar-footer">{t('nav.count', { count: model.count })}</div>
   </div>
 </Drawer>

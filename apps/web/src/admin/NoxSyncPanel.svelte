@@ -15,6 +15,7 @@
   } = $props();
   const uid = $props.id();
   let stage = $state<'connection' | 'vaults' | 'notes' | 'review'>('connection');
+  let connectionReturnStage = $state<'vaults' | 'notes' | 'review' | null>(null);
   let settings = $state<NoxSettings>({ url: '', hasKey: false });
   let url = $state('');
   let apiKey = $state('');
@@ -46,7 +47,10 @@
     error = null; disconnecting = false;
     if (stage === 'review') stage = 'notes';
     else if (stage === 'notes') stage = 'vaults';
-    else if (stage === 'connection' && settings.hasKey) stage = 'vaults';
+    else if (stage === 'connection' && settings.hasKey) {
+      stage = connectionReturnStage || 'vaults'; connectionReturnStage = null;
+      url = settings.url; apiKey = '';
+    }
   }
   $effect(() => { if (active) untrack(() => { void initialize(); }); });
   async function perform(action: () => Promise<void>) {
@@ -59,6 +63,7 @@
     await perform(async () => {
       settings = await client.noxSettings(); url = settings.url;
       stage = settings.hasKey ? 'vaults' : 'connection';
+      connectionReturnStage = null;
       if (settings.hasKey) vaults = await client.noxVaults();
     });
   }
@@ -69,10 +74,11 @@
       const result = await client.noxConnect({ url, apiKey });
       settings = result.settings; url = settings.url; apiKey = ''; vaults = result.vaults;
       listing = null; vault = null; selected = []; job = null; stage = 'vaults';
+      connectionReturnStage = null;
     });
   }
   async function disconnect() {
-    await perform(async () => { settings = await client.noxDisconnect(); apiKey = ''; url = ''; vaults = []; listing = null; vault = null; selected = []; expanded = []; job = null; disconnecting = false; });
+    await perform(async () => { settings = await client.noxDisconnect(); apiKey = ''; url = ''; vaults = []; listing = null; vault = null; selected = []; expanded = []; job = null; disconnecting = false; connectionReturnStage = null; });
   }
   async function choose(value: NoxVault) {
     await perform(async () => {
@@ -137,7 +143,7 @@
 <div class="nox-panel" aria-busy={busy}>
   <div class="nox-shortcuts">
     <div class="nox-step-heading"><button type="button" class="quiet nox-step-back" onclick={back} aria-label={t('nox.backStep')} title={t('nox.backStep')} disabled={!canGoBack || busy || working}><Icon name="left" size={18} /></button><h3>{t(titles[stage])}</h3></div>
-    {#if settings.hasKey && stage !== 'connection'}<button type="button" class="quiet nox-settings" onclick={() => { stage = 'connection'; error = null; }} aria-label={t('nox.settings')} title={t('nox.settings')} disabled={busy || working}><Icon name="settings" /></button>{/if}
+    {#if settings.hasKey && stage !== 'connection'}<button type="button" class="quiet nox-settings" onclick={() => { connectionReturnStage = stage as 'vaults' | 'notes' | 'review'; stage = 'connection'; error = null; }} aria-label={t('nox.settings')} title={t('nox.settings')} disabled={busy || working}><Icon name="settings" /></button>{/if}
   </div>
   <p class="nox-intro">{t('nox.description')}</p>
   {#if stage !== 'connection'}

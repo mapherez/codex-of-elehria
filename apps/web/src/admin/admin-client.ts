@@ -2,6 +2,7 @@ import type { CreatePageInput, DeletePageInput, DiffResponse, HistoryEntry, Move
 import { ApiClientError, WikiClient } from '../lib/api';
 import type { NoxJob, NoxListing, NoxSettings, NoxVault } from '../../../../packages/contracts/nox-sync';
 import type { PreviewPageInput, RenderedMarkdown } from '../../../../packages/contracts';
+import type { PendingPublication, PublishBatchInput, PublishBatchResult } from '../../../../packages/contracts';
 
 export class AdminClient extends WikiClient {
   private token = '';
@@ -22,6 +23,8 @@ export class AdminClient extends WikiClient {
     }
   }
   pages(): Promise<Omit<PageRecord, 'content'>[]> { return this.request('/admin/pages'); }
+  pendingPublications(): Promise<PendingPublication[]> { return this.request('/admin/publication/pending'); }
+  publishBatch(input: PublishBatchInput): Promise<PublishBatchResult> { return this.mutate('/admin/publication/publish', 'POST', input); }
   create(input: CreatePageInput): Promise<MutationResult> { return this.mutate('/admin/pages', 'POST', input); }
   save(id: string, input: SavePageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id, 'PUT', input); }
   publish(id: string, input: PublishPageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id + '/publish', 'POST', input); }

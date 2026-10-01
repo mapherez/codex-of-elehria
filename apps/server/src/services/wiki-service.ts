@@ -14,6 +14,7 @@ import { ImageFiles } from '../infrastructure/image-files';
 import { wikiImages } from '../domain/wiki-images';
 import { PublishedVersions } from './published-versions';
 import type { ImportBatchPage } from '../../../../packages/contracts/nox-sync';
+import type { PendingPublication, PublishBatchInput, PublishBatchResult } from '../../../../packages/contracts';
 
 interface Journal { beforeHead: string | null; before: PageRecord[]; after: PageRecord[]; message: string }
 
@@ -177,6 +178,28 @@ export class WikiService {
       const changed = await this.published.publish(page, (await this.repository.head())!);
       await this.refreshPreview((await this.repository.head())!);
       return { page, ...(!changed ? { unchanged: true } : {}) };
+    });
+  }
+  pendingPublications(): PendingPublication[] {
+    return this.pages.filter(page => !page.deleted).flatMap(page => {
+      const status = this.published.status(page);
+      return status === 'published' ? [] : [{ id: page.id, path: page.path, revision: page.revision, status }];
+    }).sort((a, b) => a.path.localeCompare(b.path));
+  }
+  publishBatch(input: PublishBatchInput): Promise<PublishBatchResult> {
+    return this.serializeMutation(async () => {
+      if (new Set(input.pages.map(page => page.id)).size !== input.pages.length) throw new DomainError('error.invalidRequest');
+      const pages = input.pages.map(expected => {
+        const page = this.pages.find(page => page.id === expected.id);
+        if (!page || page.deleted || page.revision !== expected.revision) throw new DomainError('error.publishBatchChanged', 409);
+        return page;
+      }).filter(page => this.published.status(page) !== 'published');
+      if (pages.length) {
+        const head = (await this.repository.head())!;
+        await this.published.publishMany(pages, head);
+        await this.refreshPreview(head);
+      }
+      return { count: pages.length };
     });
   }
   repairImage(id: string, input: RepairImageInput): Promise<MutationResult> {

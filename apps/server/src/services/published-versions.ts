@@ -97,6 +97,23 @@ export class PublishedVersions {
     await this.replace(this.records.filter(page => page.id !== id), this.state.versions.filter(version => version.id !== id));
   }
 
+  async publishMany(pages: PageRecord[], commit: string): Promise<void> {
+    const updates = new Map(pages.map(page => [page.id, structuredClone(page)]));
+    const records = this.records.map(page => updates.get(page.id) || page);
+    const existing = new Set(this.records.map(page => page.id));
+    records.push(...pages.filter(page => !existing.has(page.id)).map(page => updates.get(page.id)!));
+    const paths = new Set<string>();
+    for (const page of records) {
+      const key = page.path.toLowerCase();
+      if (paths.has(key)) throw new DomainError('error.publishedPath', 409);
+      paths.add(key);
+    }
+    const versions = this.state.versions.filter(version => !updates.has(version.id))
+      .concat(pages.map(page => ({ id: page.id, commit, revision: page.revision })));
+    // Render and persist the whole batch once; the public reader never sees a partial batch.
+    await this.replace(records, versions);
+  }
+
   private async replace(records: PageRecord[], versions: PublishedVersion[], snapshot?: Publication): Promise<void> {
     const state: PublishedState = { schema: 1, versions, snapshot: snapshot || await this.publisher.render(records, randomUUID()) };
     // Advance the durable intent only after rendering succeeds.

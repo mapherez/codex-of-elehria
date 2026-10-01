@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { diffLines } from 'diff';
-import { createPageSchema, savePageSchema, movePageSchema, deletePageSchema, repairImageSchema, publishPageSchema, previewPageSchema } from '../../../../packages/contracts';
+import { createPageSchema, savePageSchema, movePageSchema, deletePageSchema, repairImageSchema, publishPageSchema, previewPageSchema, publishBatchSchema } from '../../../../packages/contracts';
 import type { WikiService } from '../services/wiki-service';
 import type { MarkdownRenderer } from '../domain/markdown';
 import type { ImageFiles } from '../infrastructure/image-files';
@@ -10,6 +10,8 @@ import { DomainError } from '../domain/errors';
 export function adminRoutes(service: WikiService, renderer: MarkdownRenderer, token: string, images: ImageFiles, preview: { maxBytes: number; untitled: string }): Router {
   const router = Router();
   router.get('/session', (_req, res) => res.json({ token }));
+  router.get('/publication/pending', (_req, res) => res.json(service.pendingPublications()));
+  router.post('/publication/publish', async (req, res) => res.json(await service.publishBatch(publishBatchSchema.parse(req.body))));
   router.post('/preview', async (req, res) => {
     const input = previewPageSchema.parse(req.body);
     if (Buffer.byteLength(input.content) > preview.maxBytes) throw new DomainError('error.tooLarge', 413);
