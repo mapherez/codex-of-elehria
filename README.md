@@ -1,4 +1,4 @@
-# Codex
+# NoX Wiki
 
 A Markdown knowledge base with a public reader and a separate, local-only editing workspace. Both use the same host document directory. The workspace records changes in Git and atomically publishes snapshots; the public reader updates open browsers through server-sent events.
 
