@@ -1,13 +1,25 @@
 import { Router } from 'express';
 import { diffLines } from 'diff';
-import { createPageSchema, savePageSchema, movePageSchema, deletePageSchema, repairImageSchema, publishPageSchema } from '../../../../packages/contracts';
+import { createPageSchema, savePageSchema, movePageSchema, deletePageSchema, repairImageSchema, publishPageSchema, previewPageSchema } from '../../../../packages/contracts';
 import type { WikiService } from '../services/wiki-service';
 import type { MarkdownRenderer } from '../domain/markdown';
 import type { ImageFiles } from '../infrastructure/image-files';
+import { validatePath } from '../infrastructure/filesystem';
+import { DomainError } from '../domain/errors';
 
-export function adminRoutes(service: WikiService, renderer: MarkdownRenderer, token: string, images: ImageFiles): Router {
+export function adminRoutes(service: WikiService, renderer: MarkdownRenderer, token: string, images: ImageFiles, preview: { maxBytes: number; untitled: string }): Router {
   const router = Router();
   router.get('/session', (_req, res) => res.json({ token }));
+  router.post('/preview', async (req, res) => {
+    const input = previewPageSchema.parse(req.body);
+    if (Buffer.byteLength(input.content) > preview.maxBytes) throw new DomainError('error.tooLarge', 413);
+    const page = input.id ? service.get(input.id) : undefined;
+    const source = validatePath(input.path || page?.path || 'preview.md');
+    const notes = renderer.noteIndex([...service.pages.filter(item => item.id !== page?.id && item.path !== source),
+      { path: source, aliases: page?.aliases || [], content: input.content, deleted: false }]);
+    res.json(renderer.render(input.content, source, await images.index(), notes, page?.imageBindings,
+      !input.path && !page ? preview.untitled : undefined));
+  });
   router.get('/pages', (_req, res) => res.json(service.pages.map(({ content: _content, ...metadata }) => metadata)));
   router.get('/pages/:id', (req, res) => res.json(service.get(req.params.id)));
   router.post('/pages', async (req, res) => res.status(201).json(await service.create(createPageSchema.parse(req.body))));

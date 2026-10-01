@@ -1,6 +1,7 @@
 import type { CreatePageInput, DeletePageInput, DiffResponse, HistoryEntry, MovePageInput, MutationResult, PageRecord, PublishPageInput, RepairImageInput, SavePageInput, VersionResponse } from '../../../../packages/contracts';
-import { WikiClient } from '../lib/api';
+import { ApiClientError, WikiClient } from '../lib/api';
 import type { NoxJob, NoxListing, NoxSettings, NoxVault } from '../../../../packages/contracts/nox-sync';
+import type { PreviewPageInput, RenderedMarkdown } from '../../../../packages/contracts';
 
 export class AdminClient extends WikiClient {
   private token = '';
@@ -13,6 +14,13 @@ export class AdminClient extends WikiClient {
     return this.request(endpoint, { method, headers: { 'content-type': 'application/json', 'x-wiki-token': this.token }, body: JSON.stringify(body) });
   }
   original(id: string): Promise<PageRecord> { return this.request('/admin/pages/' + id); }
+  async preview(input: PreviewPageInput): Promise<RenderedMarkdown> {
+    try { return await this.mutate('/admin/preview', 'POST', input); }
+    catch (error) {
+      if (error instanceof ApiClientError && error.status === 404) throw new ApiClientError({ code: 'error.previewUnavailable' }, 404);
+      throw error;
+    }
+  }
   pages(): Promise<Omit<PageRecord, 'content'>[]> { return this.request('/admin/pages'); }
   create(input: CreatePageInput): Promise<MutationResult> { return this.mutate('/admin/pages', 'POST', input); }
   save(id: string, input: SavePageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id, 'PUT', input); }

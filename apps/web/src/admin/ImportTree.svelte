@@ -2,6 +2,7 @@
   import ImportTree from './ImportTree.svelte';
   import type { ImportNoteState } from '../../../../packages/contracts/nox-sync';
   import type { Translator } from '../../../../packages/i18n';
+  import Icon from '../lib/Icon.svelte';
   let { paths, selected, onSelect, states = {}, t, expanded, onToggle, prefix = '' }: {
     paths: string[]; selected: string[]; onSelect: (paths: string[], checked: boolean) => void; prefix?: string;
     states: Record<string, ImportNoteState>; t: Translator; expanded: string[]; onToggle: (folder: string, open: boolean) => void;
@@ -15,7 +16,7 @@
     {@const nested = paths.filter(file => file.startsWith(prefix + folder + '/'))}
     {@const count = nested.filter(file => selected.includes(file)).length}
     <li><details open={expanded.includes(prefix + folder)} ontoggle={event => onToggle(prefix + folder, event.currentTarget.open)}>
-      <summary><label><input type="checkbox" name="folder" checked={count === nested.length} indeterminate={count > 0 && count < nested.length}
+      <summary><Icon name="right" size={16} class="tree-chevron" /><label><input type="checkbox" name="folder" checked={count === nested.length} indeterminate={count > 0 && count < nested.length}
         onchange={event => onSelect(nested, event.currentTarget.checked)} /><span>{folder}</span></label></summary>
       <ImportTree paths={nested} {selected} {onSelect} {states} {t} {expanded} {onToggle} prefix={prefix + folder + '/'} />
     </details></li>

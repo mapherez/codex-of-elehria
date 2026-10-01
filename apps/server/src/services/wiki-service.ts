@@ -121,7 +121,8 @@ export class WikiService {
         if (!existing && await exists(await safeFile(this.files.directory, target))) throw new DomainError('error.pathExists', 409);
         this.files.validateContent(input.content);
         if (existing && existing.content === input.content && JSON.stringify(existing.imageBindings || {}) === JSON.stringify(input.imageBindings)
-          && existing.origin?.hash === input.origin.hash) {
+          && existing.origin?.hash === input.origin.hash && existing.origin.connectionId === input.origin.connectionId
+          && existing.origin.vaultId === input.origin.vaultId && existing.origin.path === input.origin.path) {
           results.push({ id: existing.id, path: existing.path, unchanged: true }); continue;
         }
         const revision = randomUUID();

@@ -12,7 +12,10 @@
 .codex .select-all, .codex .import-tree label, .codex .import-review fieldset label, .codex .replacement-confirm { display: flex; align-items: center; gap: .7rem; min-height: 48px; cursor: pointer; }
 .codex .select-all { border-bottom: 1px solid var(--codex-line); margin-top: .7rem; }
 .codex .nox-shortcuts { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.codex .nox-root { display: flex; align-items: center; gap: .5rem; color: var(--codex-muted); padding-inline: .5rem; }
+.codex .nox-step-heading { display: flex; align-items: center; gap: .6rem; }
+.codex .nox-step-heading h3 { font-size: .9rem; font-weight: 550; margin: 0; }
+.codex .nox-step-back { display: grid; place-items: center; min-height: 48px; min-width: 48px; padding: .5rem; border: 0; }
+.codex .nox-step-back:disabled { cursor: default; }
 .codex .nox-settings, .codex .expand-folders { display: grid; place-items: center; min-height: 48px; min-width: 48px; padding: .5rem; }
 .codex .import-list-controls { display: flex; align-items: center; gap: .5rem; border-bottom: 1px solid var(--codex-line); margin-top: .7rem; }
 .codex .import-list-controls .select-all { flex: 1; border: 0; margin: 0; }
@@ -26,8 +29,10 @@
 .codex .import-tree .import-tree { padding-inline-start: 1.4rem; border-inline-start: 1px solid var(--codex-line); margin-inline-start: .6rem; }
 .codex .import-tree span { overflow-wrap: anywhere; }
 .codex .import-tree summary { display: flex; align-items: center; cursor: pointer; gap: .5rem; }
-.codex .import-tree summary::before { content: '›'; color: var(--codex-muted); transition: transform 160ms; }
-.codex .import-tree details[open] > summary::before { transform: rotate(90deg); }
+.codex .import-tree summary { list-style: none; }
+.codex .import-tree summary::-webkit-details-marker { display: none; }
+.codex .import-tree .tree-chevron { transition: transform 160ms; }
+.codex .import-tree details[open] > summary > .tree-chevron { transform: rotate(90deg); }
 .codex .import-tree label:hover { color: var(--codex-accent); }
 .codex .import-footer { position: sticky; bottom: -1.5rem; padding: 1rem 0; margin-top: 1rem; background: var(--codex-bg); border-top: 1px solid var(--codex-line); display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; }
 .codex .import-footer p { flex-basis: 100%; margin: 0; font-size: .8rem; }
@@ -51,4 +56,4 @@
 .codex .import-results li { display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid var(--codex-line); padding-block: .7rem; }
 .codex .import-results span { flex: 1; overflow-wrap: anywhere; }
 .codex .import-resume { margin-bottom: 1rem; }
-@media (prefers-reduced-motion: reduce) { .codex .import-tree summary::before { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .codex .import-tree .tree-chevron { transition: none; } }

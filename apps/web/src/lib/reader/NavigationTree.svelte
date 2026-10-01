@@ -2,6 +2,7 @@
   import type { NavigationNode } from '../../../../../packages/contracts';
   import type { Translator } from '../../../../../packages/i18n';
   import { pageUrl } from '../../../../../packages/contracts/routes';
+  import Icon from '../Icon.svelte';
   let { nodes, activePath, basePath, t, onNavigate }: {
     nodes: NavigationNode[]; activePath: string; basePath: string; t: Translator;
     onNavigate: (path: string) => void;
@@ -23,7 +24,7 @@
       <li>
         {#if node.type === 'folder'}
           <details open={expanded[node.path] ?? false} ontoggle={event => expanded[node.path] = event.currentTarget.open}>
-            <summary><span>{node.name}</span></summary>
+            <summary><Icon name="right" size={14} class="tree-chevron" /><span>{node.name}</span></summary>
             {@render tree(node.children)}
           </details>
         {:else}

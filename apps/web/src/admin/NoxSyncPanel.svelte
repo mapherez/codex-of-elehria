@@ -6,11 +6,12 @@
   import { errorDetail } from '../lib/api';
   import type { AdminClient } from './admin-client';
   import ImportTree from './ImportTree.svelte';
+  import Icon from '../lib/Icon.svelte';
   import './nox-sync.css';
 
-  let { client, t, active, onExit, onNavigation, onImported, onOpen }: {
+  let { client, t, active, onExit, onImported, onOpen }: {
     client: AdminClient; t: Translator; active: boolean; onExit: () => void;
-    onNavigation: (title: string, back: () => void) => void; onImported: () => void; onOpen: (path: string) => void;
+    onImported: () => void; onOpen: (path: string) => void;
   } = $props();
   const uid = $props.id();
   let stage = $state<'connection' | 'vaults' | 'notes' | 'review'>('connection');
@@ -38,15 +39,15 @@
   const someExpanded = $derived(expanded.some(folder => folders.includes(folder)));
   const replacing = $derived(Object.values(decisions).includes('replace'));
   const working = $derived(job?.state === 'preparing' || job?.state === 'applying');
+  const canGoBack = $derived(stage === 'notes' || stage === 'review' || (stage === 'connection' && settings.hasKey));
+  const connectionChanged = $derived(!settings.hasKey || url !== settings.url || apiKey.length > 0);
   const titles = { connection: 'nox.connection', vaults: 'nox.vaults', notes: 'nox.notes', review: 'nox.review' } as const;
   function back() {
     error = null; disconnecting = false;
     if (stage === 'review') stage = 'notes';
     else if (stage === 'notes') stage = 'vaults';
     else if (stage === 'connection' && settings.hasKey) stage = 'vaults';
-    else onExit();
   }
-  $effect(() => { if (active) onNavigation(t('nox.title') + ' · ' + t(titles[stage]), back); });
   $effect(() => { if (active) untrack(() => { void initialize(); }); });
   async function perform(action: () => Promise<void>) {
     if (busy) return;
@@ -63,6 +64,7 @@
   }
   async function connect(event: SubmitEvent) {
     event.preventDefault();
+    if (!connectionChanged) return;
     await perform(async () => {
       const result = await client.noxConnect({ url, apiKey });
       settings = result.settings; url = settings.url; apiKey = ''; vaults = result.vaults;
@@ -70,7 +72,7 @@
     });
   }
   async function disconnect() {
-    await perform(async () => { settings = await client.noxDisconnect(); apiKey = ''; url = ''; vaults = []; listing = null; job = null; disconnecting = false; });
+    await perform(async () => { settings = await client.noxDisconnect(); apiKey = ''; url = ''; vaults = []; listing = null; vault = null; selected = []; expanded = []; job = null; disconnecting = false; });
   }
   async function choose(value: NoxVault) {
     await perform(async () => {
@@ -134,8 +136,8 @@
 
 <div class="nox-panel" aria-busy={busy}>
   <div class="nox-shortcuts">
-    <button type="button" class="quiet nox-root" onclick={onExit} title={t('nox.actions')}><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18"><path d="M3 3h7v7H3ZM14 3h7v7h-7ZM3 14h7v7H3ZM14 14h7v7h-7Z" /></svg>{t('admin.actions')}</button>
-    {#if settings.hasKey && stage !== 'connection'}<button type="button" class="quiet nox-settings" onclick={() => { stage = 'connection'; error = null; }} aria-label={t('nox.settings')} title={t('nox.settings')} disabled={busy || working}><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="m9 3-1 3-3 1-2 4 2 2v4l4 2 3-1 3 1 4-2v-4l2-2-2-4-3-1-1-3Z" /><circle cx="12" cy="12" r="3" /></svg></button>{/if}
+    <div class="nox-step-heading"><button type="button" class="quiet nox-step-back" onclick={back} aria-label={t('nox.backStep')} title={t('nox.backStep')} disabled={!canGoBack || busy || working}><Icon name="left" size={18} /></button><h3>{t(titles[stage])}</h3></div>
+    {#if settings.hasKey && stage !== 'connection'}<button type="button" class="quiet nox-settings" onclick={() => { stage = 'connection'; error = null; }} aria-label={t('nox.settings')} title={t('nox.settings')} disabled={busy || working}><Icon name="settings" /></button>{/if}
   </div>
   <p class="nox-intro">{t('nox.description')}</p>
   {#if stage !== 'connection'}
@@ -150,9 +152,9 @@
       <input id={uid + '-url'} name="url" type="url" bind:value={url} required aria-describedby={uid + '-url-hint'} />
       <p id={uid + '-url-hint'} class="field-hint">{t('nox.urlHint')}</p>
       <label for={uid + '-key'}>{t('nox.key')}</label>
-      <input id={uid + '-key'} name="apiKey" type="password" bind:value={apiKey} required={!settings.hasKey || url !== settings.url} autocomplete="off" aria-describedby={settings.hasKey ? uid + '-key-hint' : undefined} />
+      <input id={uid + '-key'} name="apiKey" type="password" bind:value={apiKey} placeholder={settings.hasKey && url === settings.url ? t('nox.savedKeyPlaceholder') : undefined} required={!settings.hasKey || url !== settings.url} autocomplete="off" aria-describedby={settings.hasKey ? uid + '-key-hint' : undefined} />
       {#if settings.hasKey}<p id={uid + '-key-hint'} class="field-hint">{t('nox.keyHint')}</p>{/if}
-      <div class="import-footer"><button type="submit" class="primary" disabled={busy || working}>{t(busy ? 'nox.connecting' : 'nox.connect')}</button></div>
+      <div class="import-footer"><button type="submit" class="primary" disabled={busy || working || !connectionChanged}>{t(busy ? 'nox.connecting' : 'nox.connect')}</button></div>
     </form>
     {#if settings.hasKey}
       {#if disconnecting}<div class="import-warning"><p>{t('nox.disconnectHint')}</p><button class="danger" onclick={disconnect} disabled={busy || working}>{t('nox.disconnect')}</button><button class="quiet" onclick={() => disconnecting = false}>{t('action.cancel')}</button></div>
@@ -160,16 +162,16 @@
     {/if}
   {:else if stage === 'vaults'}
     {#if job && (job.state === 'preparing' || job.state === 'applying')}<button class="import-resume" onclick={() => stage = 'review'}>{t(job.state === 'preparing' ? 'nox.preparing' : 'nox.applying')}</button>{/if}
-    <div class="vault-list">{#each vaults as value (value.vaultId)}<button class="action-row" onclick={() => choose(value)} disabled={busy || working}><span>{value.name}</span><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7" /></svg></button>{:else}<p class="muted">{t('nox.noVaults')}</p>{/each}</div>
+    <div class="vault-list">{#each vaults as value (value.vaultId)}<button class="action-row" onclick={() => choose(value)} disabled={busy || working}><span>{value.name}</span><Icon name="right" /></button>{:else}<p class="muted">{t('nox.noVaults')}</p>{/each}</div>
   {:else if stage === 'notes'}
     <p class="vault-context">{vault?.name}</p>
     {#if job && job.state !== 'cancelled'}<button class="import-resume" onclick={() => stage = 'review'}>{t(job.state === 'done' ? 'nox.complete' : job.state === 'preparing' ? 'nox.preparing' : 'nox.review')}</button>{/if}
     <label class="filter-label" for={uid + '-search'}>{t('nox.search')}</label><input id={uid + '-search'} type="search" name="search" bind:value={query} />
     <div class="import-list-controls"><label class="select-all"><input type="checkbox" name="all" checked={paths.length > 0 && paths.every(file => selected.includes(file))} indeterminate={paths.some(file => selected.includes(file)) && !paths.every(file => selected.includes(file))} onchange={event => select(paths, event.currentTarget.checked)} />{t('nox.selectAll')}</label>
       <button type="button" class="quiet expand-folders" disabled={!folders.length} aria-label={t(someExpanded ? 'nox.collapseAll' : 'nox.expandAll')} title={t(someExpanded ? 'nox.collapseAll' : 'nox.expandAll')} onclick={() => expanded = someExpanded ? [] : [...folders]}>
-        <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d={someExpanded ? 'm6 3 6 6 6-6M6 21l6-6 6 6' : 'm6 9 6-6 6 6M6 15l6 6 6-6'} /></svg>
+        <Icon name={someExpanded ? 'collapse' : 'expand'} />
       </button></div>
-    <div class="import-state-legend"><span><i class="import-state-dot unchanged" aria-hidden="true"></i>{t('nox.stateUnchanged')}</span><span><i class="import-state-dot problem" aria-hidden="true"></i>{t('nox.stateProblem')}</span><span>{t('nox.stateAvailable')}</span></div>
+    <div class="import-state-legend"><span><i class="import-state-dot unchanged" aria-hidden="true"></i>{t('nox.stateUnchanged')}</span><span><i class="import-state-dot problem" aria-hidden="true"></i>{t('nox.stateProblem')}</span></div>
     {#if paths.length && listing}<ImportTree {paths} {selected} onSelect={select} states={listing.notes} {t} {expanded} onToggle={toggleFolder} />{:else}<p class="muted">{t('nox.noNotes')}</p>{/if}
     <div class="import-footer"><p role="status">{t('nox.selected', { count: selected.length })}</p><button class="primary" onclick={prepare} disabled={busy || !selected.length || job?.state === 'applying'}>{t('nox.prepare')}</button><button class="quiet" onclick={refresh} disabled={busy}>{t('nox.refresh')}</button></div>
   {:else if stage === 'review' && job}

@@ -45,6 +45,10 @@ test('NoX imports remain private, preserve original Markdown, and publish immuta
     const preview = await json<{ html: string }>(await admin.request('/api/page?path=World%2FHumans.md'));
     assert.match(preview.html, /width="300" height="200"/);
     assert.match(preview.html, /data-page-path="World\/Humans.md"/);
+    const unsaved = await json<{ html: string }>(await admin.request('/api/admin/preview', 'POST', { id: human.id, content: human.content + '\nUnsaved preview.' }));
+    assert.match(unsaved.html, /Unsaved preview/);
+    assert.ok(unsaved.html.includes('data-media-path="' + media + '"'));
+    assert.equal(admin.service.wiki!.get(human.id).revision, human.revision);
     assert.equal((await publicApp.request('/api/page?path=World%2FHumans.md')).status, 404);
     assert.equal((await publicApp.request('/media/' + media)).status, 404);
     assert.equal(await (await admin.request('/media/' + media)).text(), 'first-image');
@@ -91,7 +95,8 @@ test('NoX reimports detect local edits, no-op unchanged notes, protect paths and
     await nox.connect({ url: remote.url, apiKey: 'test-private-key' });
     let listing = await nox.list('vault-id');
     let job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: listing.files.map(file => file.path) }).id);
-    assert.equal(job.reviews.filter(review => review.status === 'blocked').length, 5);
+    assert.equal(job.reviews.filter(review => review.status === 'blocked').length, 4);
+    assert.equal(job.reviews.find(review => review.path === 'guides/first.md')!.status, 'conflict');
     await nox.apply(job.id, { decisions: {}, confirmReplace: false });
     const human = wiki.pages.find(page => page.path === 'World/Humans.md')!;
     listing = await nox.list('vault-id');
@@ -123,6 +128,89 @@ test('NoX reimports detect local edits, no-op unchanged notes, protect paths and
     await wiki.delete(human.id, { revision: wiki.get(human.id).revision });
     job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: ['World/Humans.md'] }).id);
     assert.equal(job.reviews[0]!.reason!.code, 'error.noxDeleted');
+  } finally { await remote.close(); await f.cleanup(); }
+});
+
+test('NoX links an existing nested page only after confirmation and reimports future updates privately', async () => {
+  const f = await fixture(); const remote = await fakeNox(); const secondSource = await fakeNox();
+  const notePath = 'Lore/People/Humans.md';
+  try {
+    await fs.mkdir(path.join(f.config.contentDir, 'Lore', 'People'), { recursive: true });
+    await fs.writeFile(path.join(f.config.contentDir, notePath), '# Humans\nExisting local note.');
+    remote.put(notePath, '# Humans\nFirst remote version.');
+    const admin = await f.start('admin'); const reader = await f.start('public');
+    const nox = admin.service.nox!; const wiki = admin.service.wiki!;
+    const original = wiki.pages.find(page => page.path === notePath)!;
+    await nox.connect({ url: remote.url, apiKey: 'test-private-key' });
+    let listing = await nox.list('vault-id');
+    assert.equal(listing.notes[notePath]!.status, 'conflict');
+    assert.equal(listing.notes[notePath]!.reason!.code, 'error.noxExisting');
+    let job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: [notePath] }).id);
+    assert.equal(job.reviews[0]!.localContent, original.content);
+    assert.equal(job.reviews[0]!.remoteContent, '# Humans\nFirst remote version.');
+    const head = await wiki.repository.head();
+    await nox.apply(job.id, { decisions: {}, confirmReplace: false });
+    assert.equal(await wiki.repository.head(), head);
+    assert.deepEqual(wiki.get(original.id), original);
+    job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: [notePath] }).id);
+    await assert.rejects(nox.apply(job.id, { decisions: { [notePath]: 'replace' }, confirmReplace: false }), /error.invalidRequest/);
+    await nox.apply(job.id, { decisions: { [notePath]: 'replace' }, confirmReplace: true });
+    assert.equal(wiki.pages.filter(page => page.path === notePath).length, 1);
+    assert.equal(wiki.get(original.id).origin!.path, notePath);
+    assert.equal(wiki.get(original.id).origin!.importedRevision, wiki.get(original.id).revision);
+    const publicNote = await (await reader.request('/api/page?path=' + encodeURIComponent(notePath))).json();
+    assert.match(publicNote.html, /Existing local note/);
+    assert.doesNotMatch(publicNote.html, /First remote version/);
+    assert.equal(await wiki.repository.head() === head, false);
+    remote.put(notePath, '# Humans\nSecond remote version.');
+    listing = await nox.list('vault-id');
+    assert.equal(listing.notes[notePath]!.status, 'update');
+    job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: [notePath] }).id);
+    assert.equal(job.reviews[0]!.status, 'update');
+    await nox.apply(job.id, { decisions: {}, confirmReplace: false });
+    assert.equal(wiki.get(original.id).content, '# Humans\nSecond remote version.');
+    assert.match((await (await reader.request('/api/page?path=' + encodeURIComponent(notePath))).json()).html, /Existing local note/);
+    listing = await nox.list('vault-id');
+    assert.equal(listing.notes[notePath]!.status, 'unchanged');
+    job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: [notePath] }).id);
+    const updatedHead = await wiki.repository.head();
+    await nox.apply(job.id, { decisions: {}, confirmReplace: false });
+    assert.equal(await wiki.repository.head(), updatedHead);
+    // Identical bytes from a different backend still require confirmation and a recorded source change.
+    secondSource.put(notePath, wiki.get(original.id).content);
+    await nox.connect({ url: secondSource.url, apiKey: 'test-private-key' });
+    listing = await nox.list('vault-id');
+    assert.equal(listing.notes[notePath]!.status, 'conflict');
+    job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: [notePath] }).id);
+    const previousConnection = wiki.get(original.id).origin!.connectionId;
+    await nox.apply(job.id, { decisions: { [notePath]: 'replace' }, confirmReplace: true });
+    assert.notEqual(wiki.get(original.id).origin!.connectionId, previousConnection);
+    assert.notEqual(await wiki.repository.head(), updatedHead);
+    assert.equal((await nox.list('vault-id')).notes[notePath]!.status, 'unchanged');
+  } finally { await remote.close(); await secondSource.close(); await f.cleanup(); }
+});
+
+test('NoX blocks two selected source notes that resolve to the same existing page', async () => {
+  const f = await fixture(); const remote = await fakeNox();
+  try {
+    remote.put('First.md', '# First');
+    const admin = await f.start('admin'); const nox = admin.service.nox!; const wiki = admin.service.wiki!;
+    await nox.connect({ url: remote.url, apiKey: 'test-private-key' });
+    let listing = await nox.list('vault-id');
+    let job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: ['First.md'] }).id);
+    await nox.apply(job.id, { decisions: {}, confirmReplace: false });
+    const first = wiki.pages.find(page => page.path === 'First.md')!;
+    await wiki.move(first.id, { path: 'Nested/Second.md', revision: first.revision });
+    remote.put('Nested/Second.md', '# Second');
+    listing = await nox.list('vault-id');
+    assert.equal(listing.notes['First.md']!.status, 'blocked');
+    assert.equal(listing.notes['Nested/Second.md']!.status, 'blocked');
+    job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: ['First.md', 'Nested/Second.md'] }).id);
+    assert.equal(job.reviews.every(review => review.status === 'blocked'), true);
+    const head = await wiki.repository.head();
+    await nox.apply(job.id, { decisions: { 'Nested/Second.md': 'replace' }, confirmReplace: true });
+    assert.equal(await wiki.repository.head(), head);
+    assert.equal(wiki.get(first.id).content, '# First');
   } finally { await remote.close(); await f.cleanup(); }
 });
 

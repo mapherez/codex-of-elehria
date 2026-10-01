@@ -9,6 +9,7 @@ import { DomainError } from '../domain/errors';
 import { assertImportPath, atomicWrite, exists, readJson, safeFile, serialize, validatePath } from '../infrastructure/filesystem';
 import { bindImportedImages, importedImagePath } from '../domain/imported-images';
 import type { WikiService } from './wiki-service';
+import type { PageRecord } from '../../../../packages/contracts';
 
 const integer = z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER);
 const remoteFiles = z.object({ vaultId: z.string(), serverRevision: integer, files: z.array(z.object({
@@ -145,9 +146,10 @@ export class NoxSync {
     for (const { review, page } of reviewed) if (page?.id) {
       const local = this.wiki.get(page.id);
       const linked = bindImportedImages(local.content, page.origin.path, parsed.data.files, image => importedImagePath(connection.id, vaultKey, image));
-      const same = createHash('sha256').update(local.content).digest('hex') === page.origin.hash
+      const linkedSource = this.sameSource(local, page);
+      const same = linkedSource && createHash('sha256').update(local.content).digest('hex') === page.origin.hash
         && local.origin?.hash === page.origin.hash && JSON.stringify(local.imageBindings || {}) === JSON.stringify(linked.bindings);
-      review.status = same ? 'unchanged' : local.revision === local.origin?.importedRevision ? 'update' : 'conflict';
+      review.status = same ? 'unchanged' : linkedSource && local.revision === local.origin?.importedRevision ? 'update' : 'conflict';
     }
     const notes = Object.fromEntries(reviewed.map(({ review }) => [review.path, { status: review.status, targetPath: review.targetPath, reason: review.reason }]));
     const listing: NoxListing = { ...parsed.data, listingId: randomUUID(), notes };
@@ -184,8 +186,10 @@ export class NoxSync {
       validatePath(file.path);
       if (file.path.toLowerCase() === 'home.md') throw new DomainError('error.noxHome');
       if (file.path.toLowerCase().startsWith('_images/')) throw new DomainError('error.noxReserved');
-      const existing = this.wiki.pages.find(page => page.origin?.connectionId === connection.id && page.origin.vaultId === vaultId && page.origin.path === file.path);
-      if (existing?.deleted) throw new DomainError('error.noxDeleted');
+      const imported = this.wiki.pages.find(page => page.origin?.connectionId === connection.id && page.origin.vaultId === vaultId && page.origin.path === file.path);
+      if (imported?.deleted) throw new DomainError('error.noxDeleted');
+      const existing = imported || this.wiki.pages.find(page => !page.deleted && page.path === file.path);
+      if (existing && !imported) { base.status = 'conflict'; base.reason = { code: 'error.noxExisting' }; }
       const target = existing?.path || file.path;
       assertImportPath(target, this.wiki.pages.filter(page => !page.deleted && page.id !== existing?.id).map(page => page.path));
       base.targetPath = target;
@@ -219,11 +223,14 @@ export class NoxSync {
     job.public.completed++; return target;
   }
   private vaultKey(vaultId: string) { return createHash('sha256').update(vaultId).digest('hex').slice(0, 24); }
+  private sameSource(local: PageRecord, remote: ImportBatchPage) {
+    return local.origin?.connectionId === remote.origin.connectionId && local.origin.vaultId === remote.origin.vaultId && local.origin.path === remote.origin.path;
+  }
   private reviewFiles(files: NoxFile[], connection: Connection, vaultId: string) {
     const reviews = files.map(file => this.review(file, connection, vaultId));
-    const targets = reviews.filter(item => item.page).map(item => item.page!.path);
-    for (const item of reviews) if (item.page) {
-      try { assertImportPath(item.page.path, targets.filter(target => target !== item.page!.path)); }
+    const targets = reviews.map((item, index) => ({ index, path: item.page?.path })).filter(target => target.path !== undefined);
+    for (const [index, item] of reviews.entries()) if (item.page) {
+      try { assertImportPath(item.page.path, targets.filter(target => target.index !== index).map(target => target.path!)); }
       catch { item.review.status = 'blocked'; item.review.reason = { code: 'error.pathExists' }; item.page = undefined; }
     }
     return reviews;
@@ -250,9 +257,10 @@ export class NoxSync {
       }
       if (page.id) {
         const local = this.wiki.get(page.id);
-        const same = local.content === page.content && JSON.stringify(local.imageBindings || {}) === JSON.stringify(page.imageBindings)
+        const linkedSource = this.sameSource(local, page);
+        const same = linkedSource && local.content === page.content && JSON.stringify(local.imageBindings || {}) === JSON.stringify(page.imageBindings)
           && local.origin?.hash === page.origin.hash;
-        review.status = same ? 'unchanged' : local.revision === local.origin?.importedRevision ? 'update' : 'conflict';
+        review.status = same ? 'unchanged' : linkedSource && local.revision === local.origin?.importedRevision ? 'update' : 'conflict';
         if (review.status === 'conflict') { review.localContent = local.content; review.remoteContent = page.content; }
       }
       job.pages.set(file.path, page);

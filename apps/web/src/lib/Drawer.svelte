@@ -2,6 +2,7 @@
   import { onMount, type Snippet } from 'svelte';
   import type { Translator } from '../../../../packages/i18n';
   import './drawer.css';
+  import Icon from './Icon.svelte';
 
   let { open = $bindable(false), id, title, side = 'right', mobileOnly = false, t, children, onClosed, onBack, wide = false }: {
     open?: boolean; id: string; title: string; side?: 'left' | 'right'; mobileOnly?: boolean;
@@ -142,10 +143,10 @@
   <div class="drawer-scroller" bind:this={scroller} onscroll={fade} onclick={dismissBackdrop} role="presentation">
     <div class="drawer-sheet" bind:this={sheet}>
       <div class="drawer-heading">
-        {#if onBack}<button type="button" class="drawer-back quiet" onclick={onBack} aria-label={t('action.back')}><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="m14 5-7 7 7 7M7 12h14" /></svg></button>{/if}
+        {#if onBack}<button type="button" class="drawer-back quiet" onclick={onBack} aria-label={t('action.back')}><Icon name="back" /></button>{/if}
         <h2 id={id + '-title'} tabindex="-1">{title}</h2>
         <button type="button" class="drawer-close quiet" onclick={() => open = false} aria-label={t('action.close')}>
-          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="m6 6 12 12M18 6 6 18" /></svg>
+          <Icon name="cancel" />
         </button>
       </div>
       {@render children()}

@@ -4,6 +4,7 @@
   import type { Translator } from '../../../../packages/i18n';
   import type { AdminClient } from './admin-client';
   import { errorDetail } from '../lib/api';
+  import MarkdownContent from '../lib/reader/MarkdownContent.svelte';
   let { id, client, t, locale, onClose, showClose = true }: { id: string; client: AdminClient; t: Translator; locale: string; onClose: () => void; showClose?: boolean } = $props();
   let entries = $state<HistoryEntry[]>([]);
   let version = $state<VersionResponse | null>(null);
@@ -71,7 +72,7 @@
     {#if source}
       <!-- svelte-ignore a11y_no_noninteractive_tabindex (This scrollable source must support keyboard scrolling.) -->
       <pre class="source-preview" tabindex="0">{version.content}</pre>
-    {:else}<article class="prose historical-article">{@html version.html}</article>{/if}
+    {:else}<MarkdownContent html={version.html} apiBase={client.apiBase} basePath={client.apiBase.replace(/\/api\/?$/, '')} {t} />{/if}
   {/if}
   {#if comparison}
     <p class="muted">{t('history.pathChange', { from: comparison.before.path, to: comparison.after.path })}</p>

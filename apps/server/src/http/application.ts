@@ -80,7 +80,7 @@ export async function createApplication(config: RuntimeConfig) {
     if (reader.current) res.write(`event: publication\ndata: ${JSON.stringify({ revision: reader.current.revision })}\n\n`);
     req.on('close', () => clients.delete(res));
   });
-  if (wiki) routes.use('/api/admin', adminRoutes(wiki, renderer, token, new ImageFiles(config.contentDir)));
+  if (wiki) routes.use('/api/admin', adminRoutes(wiki, renderer, token, new ImageFiles(config.contentDir), { maxBytes: config.site.maxPageBytes, untitled: t('editor.new') }));
   if (nox) routes.use('/api/admin/nox', noxRoutes(nox));
   routes.get(/^\/media\/(.+)$/, async (req, res) => {
     const relative = String(req.params[0]);

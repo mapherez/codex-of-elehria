@@ -19,7 +19,7 @@
 .side-drawer .drawer-back { display: grid; place-items: center; min-height: 44px; min-width: 44px; padding: .5rem; }
 .side-drawer .drawer-heading h2 { margin: 0; font-size: 1rem; font-weight: 600; }
 .side-drawer .drawer-close { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: .5rem; }
-.side-drawer svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.side-drawer svg { flex-shrink: 0; }
 .side-drawer .drawer-navigation { padding-bottom: 1rem; }
 .side-drawer .drawer-navigation > a { display: block; margin: 0 .6rem 1rem; text-decoration: none; }
 .codex.side-drawer.mobile { inset: 0; width: 100dvw; }

@@ -50,6 +50,8 @@ export const savePageSchema = z.object({ content: z.string(), revision: z.string
 export const movePageSchema = z.object({ path: z.string(), revision: z.string(), message: summary });
 export const deletePageSchema = z.object({ revision: z.string(), message: summary });
 export const publishPageSchema = z.object({ revision: z.string() });
+export const previewPageSchema = z.object({ content: z.string(), path: z.string().optional(), id: z.string().optional() });
+export type PreviewPageInput = z.infer<typeof previewPageSchema>;
 export type PublishPageInput = z.infer<typeof publishPageSchema>;
 export const repairImageSchema = z.object({
   revision: z.string(), occurrence: z.number().int().nonnegative(),

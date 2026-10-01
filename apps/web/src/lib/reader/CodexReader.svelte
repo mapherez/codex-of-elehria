@@ -8,6 +8,7 @@
   import TableOfContents from './TableOfContents.svelte';
   import Article from './Article.svelte';
   import Drawer from '../Drawer.svelte';
+  import Icon from '../Icon.svelte';
   import './reader.css';
 
   let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, showLinkWarnings = false, toolbar, body, hash = '', refreshKey = 0,
@@ -105,13 +106,13 @@
       <p class="muted" role="status">{t('app.loading')}</p>
     {:else if model.error}
       <section class="empty-state">
-        <span class="empty-mark" aria-hidden="true">◇</span>
+        <span class="empty-mark" aria-hidden="true"><Icon name="unavailable" size={40} /></span>
         <h1>{t('page.unavailable')}</h1><p>{t(model.error.code, model.error.params)}</p>
         <button onclick={() => model.open(path)}>{t('action.retry')}</button>
       </section>
     {:else if model.page}
       {#if model.page.headings.length}
-        <details class="mobile-toc"><summary>{t('toc.title')}</summary>
+        <details class="mobile-toc"><summary><Icon name="right" size={16} class="tree-chevron" />{t('toc.title')}</summary>
           <TableOfContents headings={model.page.headings} active={activeHeading} {t} onSelect={jump} />
         </details>
       {/if}

@@ -30,9 +30,7 @@
   let editorControls = $state<{ save: () => void; busy: boolean } | null>(null);
   let view = $state<'read' | 'edit'>('read');
   let drawerView = $state<'actions' | 'history' | 'deleted' | 'move' | 'delete' | 'nox'>('actions');
-  let noxTitle = $state(t('nox.title'));
-  let noxBack: () => void = () => drawerView = 'actions';
-  const drawerTitle = $derived(drawerView === 'nox' ? noxTitle : t(drawerView === 'history' ? 'history.title' : drawerView === 'deleted' ? 'history.removedTitle' : drawerView === 'move' ? 'move.title' : drawerView === 'delete' ? 'delete.title' : 'admin.actions'));
+  const drawerTitle = $derived(t(drawerView === 'nox' ? 'nox.title' : drawerView === 'history' ? 'history.title' : drawerView === 'deleted' ? 'history.removedTitle' : drawerView === 'move' ? 'move.title' : drawerView === 'delete' ? 'delete.title' : 'admin.actions'));
   let current = $state<PageResponse | null>(null);
   let original = $state<PageRecord | null>(null);
   let historyId = $state('');
@@ -45,7 +43,10 @@
   let notice = $state('');
   let refreshKey = $state(0);
   let pickingImage = false;
-  function runAction(next: () => void) { pendingAction = next; actionsOpen = false; }
+  function runAction(next: () => void) {
+    if (matchMedia('(min-width: 1025px)').matches) next();
+    else { pendingAction = next; actionsOpen = false; }
+  }
   function actionsClosed() { const next = pendingAction; pendingAction = null; next?.(); }
   async function repairImage(page: PageResponse, occurrence: number) {
     if (pickingImage) return;
@@ -99,7 +100,7 @@
 {/snippet}
 {#snippet actions()}
   <div hidden={drawerView !== 'nox'}><NoxSyncPanel {client} {t} active={drawerView === 'nox'} onExit={() => drawerView = 'actions'}
-    onNavigation={(title, back) => { noxTitle = title; noxBack = back; }} onImported={() => refreshKey++}
+    onImported={() => refreshKey++}
     onOpen={path => runAction(() => navigate(path))} /></div>
   {#if drawerView === 'history'}
     {#key historyId}<HistoryView id={historyId} {client} {t} locale={config.locale} onClose={() => drawerView = 'actions'} showClose={false} />{/key}
@@ -153,7 +154,7 @@
 {/snippet}
 
 <AppShell {config} {t} {navigationId} bind:navigationOpen bind:actionsOpen {actions} onActionsClosed={actionsClosed} onHome={() => navigate('home.md')}
-  actionsTitle={drawerTitle} actionsWide={drawerView === 'nox' || drawerView === 'history'} onActionsBack={drawerView === 'actions' ? undefined : () => { if (drawerView === 'nox') noxBack(); else drawerView = drawerView === 'history' ? historyParent : 'actions'; }}>
+  actionsTitle={drawerTitle} actionsWide={drawerView === 'nox' || drawerView === 'history'} onActionsBack={drawerView === 'actions' ? undefined : () => { drawerView = drawerView === 'history' ? historyParent : 'actions'; }}>
   <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} toolbar={error || notice ? toolbar : undefined} {refreshKey}
     onImagePick={repairImage} showLinkWarnings
     {navigationId} bind:navigationOpen

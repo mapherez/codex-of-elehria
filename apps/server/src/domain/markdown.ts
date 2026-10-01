@@ -74,12 +74,12 @@ export class MarkdownRenderer {
     return { embeds, marker, tokens: this.parser.parse(prepared, {}) };
   }
 
-  render(content: string, source: string, images = new ImageIndex(), notes?: NoteIndex, bindings?: ImageBindings): RenderedMarkdown {
+  render(content: string, source: string, images = new ImageIndex(), notes?: NoteIndex, bindings?: ImageBindings, fallbackTitle?: string): RenderedMarkdown {
     const { embeds, marker, tokens } = this.prepare(content);
     const outline = assignHeadings(tokens);
     const headings = outline.filter(heading => heading.level >= 2);
     const firstTitle = outline.find(heading => heading.level === 1);
-    const title = firstTitle?.text ?? path.posix.basename(source).replace(/\.md$/i, '');
+    const title = firstTitle?.text ?? fallbackTitle ?? path.posix.basename(source).replace(/\.md$/i, '');
     const hasTitle = Boolean(firstTitle);
     const noteIndex = notes || new NoteIndex([{ path: source, aliases: [], headings: outline }]);
     for (let index = 0; index < tokens.length; index++) {

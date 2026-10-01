@@ -127,14 +127,12 @@
 .codex .tree-list summary::-webkit-details-marker {
   display: none;
 }
-.codex .tree-list summary::before {
-  content: "›";
-  display: inline-block;
+.codex .tree-chevron {
+  flex-shrink: 0;
   color: var(--codex-muted);
-  font-size: 1rem;
   transform: rotate(0deg);
 }
-.codex .tree-list details[open] > summary::before {
+.codex details[open] > summary > .tree-chevron {
   transform: rotate(90deg);
 }
 .codex .tree-list a {
@@ -298,6 +296,8 @@
   margin: 2rem 0;
 }
 .codex .heading-anchor {
+  display: inline-flex;
+  vertical-align: middle;
   margin-left: 0.5em;
   font-family: ui-sans-serif, system-ui, sans-serif;
   font-size: 0.65em;
@@ -446,4 +446,7 @@
   vertical-align: middle;
 }
 .codex .note-warning { display: none; }
+.codex .prose :where(.image-unresolved, .note-warning, .image-repair) svg { vertical-align: middle; }
+.codex .mobile-toc summary { list-style: none; display: flex; align-items: center; gap: .5rem; }
+.codex .mobile-toc summary::-webkit-details-marker { display: none; }
 .codex.show-link-warnings .note-warning { display: inline; margin-inline-start: .3em; color: var(--codex-accent); }

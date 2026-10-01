@@ -4,6 +4,7 @@
   import type { Translator } from '../../../../packages/i18n';
   import { pageUrl } from '../../../../packages/contracts/routes';
   import Drawer from '../lib/Drawer.svelte';
+  import Icon from '../lib/Icon.svelte';
   import './standalone.css';
   let { config, t, children, onHome, navigationOpen = $bindable(false), navigationId,
     actionsOpen = $bindable(false), actions, onActionsClosed, actionsTitle, onActionsBack, actionsWide = false }: {
@@ -19,7 +20,7 @@
 <header class="app-header">
   <button type="button" class="header-control navigation-trigger" aria-label={t(navigationOpen ? 'nav.close' : 'nav.open')}
     aria-expanded={navigationOpen} aria-controls={navigationId} onclick={() => { actionsOpen = false; navigationOpen = !navigationOpen; }}>
-    <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
+    <Icon name="menu" size={22} />
   </button>
   <a class="brand" href={pageUrl('home.md', config.basePath)} onclick={event => { event.preventDefault(); onHome(); }}>
     {#if config.brand.logoUrl}<img src={config.brand.logoUrl} alt="" width="34" height="34" />
@@ -30,9 +31,9 @@
   {#if actions}
     <button type="button" class="header-control actions-trigger" aria-label={t(actionsOpen ? 'admin.close' : 'admin.open')}
       aria-expanded={actionsOpen} aria-controls={actionsId} onclick={() => { navigationOpen = false; actionsOpen = !actionsOpen; }}>
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="22" height="22"><path d="m15 5-7 7 7 7" /></svg>
+      <Icon name="left" size={22} />
     </button>
   {/if}
 </header>
-{@render children()}
+<div class="standalone-content" class:actions-visible={actionsOpen} class:actions-wide={actionsWide}>{@render children()}</div>
 {#if actions}<Drawer id={actionsId} title={actionsTitle || t('admin.actions')} {t} bind:open={actionsOpen} onClosed={onActionsClosed} onBack={onActionsBack} wide={actionsWide}>{@render actions()}</Drawer>{/if}
