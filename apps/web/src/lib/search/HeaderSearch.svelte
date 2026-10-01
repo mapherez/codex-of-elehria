@@ -31,6 +31,7 @@
     }, 180);
     return () => { clearTimeout(timer); controller.abort(); };
   });
+  function clear() { query = ''; input?.focus(); }
   async function expand() { onOpen(); open = true; await tick(); input?.focus(); }
   async function close(restore = false) { open = false; if (restore) { await tick(); trigger?.focus(); } }
   function showAll(event?: SubmitEvent) {
@@ -54,16 +55,16 @@
 </script>
 <svelte:window onpointerdown={outside} />
 <div class="header-search" class:expanded={open} bind:this={root} use:keyboard>
-  {#if !open}
-    <button type="button" class="header-control search-trigger" aria-label={t('search.open')} aria-expanded="false" bind:this={trigger} onclick={expand}><Icon name="search" size={22} /></button>
-  {:else}
+  <button type="button" class="header-control search-trigger" aria-label={t('search.open')} aria-expanded={open} aria-hidden={open} disabled={open} bind:this={trigger} onclick={expand}><Icon name="search" size={22} /></button>
+  <div class="header-search-field" inert={!open} aria-hidden={!open}>
     <form class="header-search-form" role="search" aria-label={t('search.label')} onsubmit={showAll}>
       <Icon name="search" size={20} />
       <label for={uid + '-query'} class="search-visually-hidden">{t('search.query')}</label>
       <input id={uid + '-query'} type="search" bind:this={input} bind:value={query} maxlength="300" name="q" autocomplete="off" placeholder={t('search.placeholder')} aria-controls={query.trim() ? uid + '-results' : undefined} />
-      <button type="button" class="header-control search-close" aria-label={t('search.close')} onclick={() => close(true)}><Icon name="cancel" size={18} /></button>
+      <button type="button" class="header-control search-clear" aria-label={t('search.clear')} onclick={clear}><Icon name="cancel" size={18} /></button>
     </form>
-    {#if query.trim()}
+  </div>
+    {#if open && query.trim()}
       <nav id={uid + '-results'} class="quick-search-panel" aria-label={t('search.results')} aria-busy={loading}>
         {#if loading}<p class="search-status">{t('search.loading')}</p>
         {:else if error}<p class="search-status" role="alert">{t(error.code, error.params)}</p>
@@ -74,5 +75,4 @@
         <button type="button" class="search-show-all" onclick={() => showAll()}>{t('search.showAll')}<Icon name="right" size={16} /></button>
       </nav>
     {/if}
-  {/if}
 </div>

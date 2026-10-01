@@ -217,5 +217,6 @@
   "search.count": "{{count}} results",
   "search.countQuery": "{{count}} results for “{{query}}”",
   "search.empty": "No results for “{{query}}”.",
-  "search.more": "Load more results"
+  "search.more": "Load more results",
+  "search.clear": "Clear search"
 }
