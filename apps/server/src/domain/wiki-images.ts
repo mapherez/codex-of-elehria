@@ -46,6 +46,8 @@ export class ImageIndex {
   constructor(paths: string[] = []) {
     this.paths = new Set(paths);
     for (const file of paths) {
+      // Managed imports only resolve by their explicit path or a page binding.
+      if (file.toLowerCase().startsWith('nox-sync/')) continue;
       const name = path.posix.basename(file);
       this.names.set(name, [...(this.names.get(name) || []), file]);
     }

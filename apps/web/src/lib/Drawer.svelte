@@ -3,9 +3,9 @@
   import type { Translator } from '../../../../packages/i18n';
   import './drawer.css';
 
-  let { open = $bindable(false), id, title, side = 'right', mobileOnly = false, t, children, onClosed }: {
+  let { open = $bindable(false), id, title, side = 'right', mobileOnly = false, t, children, onClosed, onBack, wide = false }: {
     open?: boolean; id: string; title: string; side?: 'left' | 'right'; mobileOnly?: boolean;
-    t: Translator; children: Snippet; onClosed?: () => void;
+    t: Translator; children: Snippet; onClosed?: () => void; onBack?: () => void; wide?: boolean;
   } = $props();
   let dialog: HTMLDialogElement;
   let scroller: HTMLDivElement;
@@ -20,6 +20,8 @@
   let animation: Animation | undefined;
   let previousFocus: HTMLElement | null = null;
   let previousOverflow: string | undefined;
+  let lastTitle = '';
+  const scrollPositions = new Map<string, number>();
   const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
   const closedPosition = () => side === 'left' ? sheet.offsetWidth : 0;
   const openPosition = () => side === 'left' ? 0 : sheet.offsetWidth;
@@ -125,14 +127,23 @@
       if (!dialog.open) void show();
     } else if (dialog.open) void hide();
   });
+  $effect(() => {
+    if (!mounted || title === lastTitle) return;
+    if (lastTitle) scrollPositions.set(lastTitle, sheet.scrollTop);
+    lastTitle = title;
+    sheet.scrollTop = scrollPositions.get(title) || 0;
+    if (dialog.open) dialog.querySelector<HTMLElement>('h2')?.focus({ preventScroll: true });
+  });
 </script>
 
 <dialog {id} class="codex side-drawer" class:left={side === 'left'} class:mobile bind:this={dialog}
+  class:wide
   aria-labelledby={id + '-title'} oncancel={event => { event.preventDefault(); open = false; }}>
   <div class="drawer-scroller" bind:this={scroller} onscroll={fade} onclick={dismissBackdrop} role="presentation">
     <div class="drawer-sheet" bind:this={sheet}>
       <div class="drawer-heading">
-        <h2 id={id + '-title'}>{title}</h2>
+        {#if onBack}<button type="button" class="drawer-back quiet" onclick={onBack} aria-label={t('action.back')}><svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="m14 5-7 7 7 7M7 12h14" /></svg></button>{/if}
+        <h2 id={id + '-title'} tabindex="-1">{title}</h2>
         <button type="button" class="drawer-close quiet" onclick={() => open = false} aria-label={t('action.close')}>
           <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20"><path d="m6 6 12 12M18 6 6 18" /></svg>
         </button>

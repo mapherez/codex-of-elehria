@@ -4,6 +4,7 @@
   border: 0; background: transparent; overflow: hidden; display: none;
 }
 .codex.side-drawer[open] { display: block; }
+.codex.side-drawer.wide:not(.mobile) { width: min(38rem, 65vw); }
 .codex.side-drawer.left { inset: 0 auto 0 0; }
 .codex.side-drawer::backdrop { background: rgb(0 0 0 / calc(.6 * var(--drawer-fade, 1))); }
 .side-drawer .drawer-scroller { height: 100%; }
@@ -13,7 +14,9 @@
   border-inline-start: 1px solid var(--codex-line); box-shadow: -12px 0 40px #0004;
 }
 .side-drawer.left .drawer-sheet { border-inline-start: 0; border-inline-end: 1px solid var(--codex-line); }
-.side-drawer .drawer-heading { display: flex; align-items: center; gap: 1rem; justify-content: space-between; margin-bottom: 2rem; }
+.side-drawer .drawer-heading { display: flex; align-items: center; gap: .6rem; justify-content: space-between; margin-bottom: 1.5rem; position: sticky; top: -1.25rem; background: var(--codex-bg); z-index: 2; padding-block: .5rem; }
+.side-drawer .drawer-heading h2 { flex: 1; }
+.side-drawer .drawer-back { display: grid; place-items: center; min-height: 44px; min-width: 44px; padding: .5rem; }
 .side-drawer .drawer-heading h2 { margin: 0; font-size: 1rem; font-weight: 600; }
 .side-drawer .drawer-close { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: .5rem; }
 .side-drawer svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }

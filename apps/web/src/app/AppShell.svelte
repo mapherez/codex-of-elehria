@@ -6,9 +6,10 @@
   import Drawer from '../lib/Drawer.svelte';
   import './standalone.css';
   let { config, t, children, onHome, navigationOpen = $bindable(false), navigationId,
-    actionsOpen = $bindable(false), actions, onActionsClosed }: {
+    actionsOpen = $bindable(false), actions, onActionsClosed, actionsTitle, onActionsBack, actionsWide = false }: {
     config: PublicConfig; t: Translator; children: Snippet; onHome: () => void;
     navigationOpen?: boolean; navigationId: string; actionsOpen?: boolean; actions?: Snippet; onActionsClosed?: () => void;
+    actionsTitle?: string; onActionsBack?: () => void; actionsWide?: boolean;
   } = $props();
   const uid = $props.id();
   const actionsId = uid + '-actions';
@@ -34,4 +35,4 @@
   {/if}
 </header>
 {@render children()}
-{#if actions}<Drawer id={actionsId} title={t('admin.actions')} {t} bind:open={actionsOpen} onClosed={onActionsClosed}>{@render actions()}</Drawer>{/if}
+{#if actions}<Drawer id={actionsId} title={actionsTitle || t('admin.actions')} {t} bind:open={actionsOpen} onClosed={onActionsClosed} onBack={onActionsBack} wide={actionsWide}>{@render actions()}</Drawer>{/if}

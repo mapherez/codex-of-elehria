@@ -7,12 +7,26 @@ import { toMarkdown } from 'mdast-util-to-markdown';
 import { gfm } from 'micromark-extension-gfm';
 import { gfmFromMarkdown, gfmToMarkdown } from 'mdast-util-gfm';
 import type { Nodes } from 'mdast';
-import type { Heading, RenderedMarkdown } from '../../../../packages/contracts';
+import type { Heading, ImageBindings, RenderedMarkdown } from '../../../../packages/contracts';
 import { pageUrl } from '../../../../packages/contracts/routes';
 import type { Translator } from '../../../../packages/i18n';
 import { validatePath } from '../infrastructure/filesystem';
 import { ImageIndex, replaceWikiImages, wikiImages } from './wiki-images';
 import { installWikiLinks, NoteIndex, type WikiLink } from './wiki-links';
+
+const linkNormalizer = new MarkdownIt();
+export const normalizeImageUrl = (url: string) => linkNormalizer.normalizeLink(url);
+export function relocateImageBindings(bindings: ImageBindings | undefined, oldPath: string, newPath: string): ImageBindings | undefined {
+  if (!bindings) return undefined;
+  return Object.fromEntries(Object.entries(bindings).map(([key, value]) => {
+    if (!key.startsWith('m:') || key.slice(2).startsWith('/')) return [key, value];
+    const target = resolveLocalLink(key.slice(2), oldPath);
+    if (!target) return [key, value];
+    const relative = path.posix.relative(path.posix.dirname(newPath), target.path === oldPath ? newPath : target.path);
+    const url = relative.split('/').map(segment => segment === '..' ? segment : encodeURIComponent(segment)).join('/') + target.suffix;
+    return ['m:' + normalizeImageUrl(url), value];
+  }));
+}
 
 function assignHeadings(tokens: Token[]): Heading[] {
   const headings: Heading[] = [];
@@ -60,7 +74,7 @@ export class MarkdownRenderer {
     return { embeds, marker, tokens: this.parser.parse(prepared, {}) };
   }
 
-  render(content: string, source: string, images = new ImageIndex(), notes?: NoteIndex): RenderedMarkdown {
+  render(content: string, source: string, images = new ImageIndex(), notes?: NoteIndex, bindings?: ImageBindings): RenderedMarkdown {
     const { embeds, marker, tokens } = this.prepare(content);
     const outline = assignHeadings(tokens);
     const headings = outline.filter(heading => heading.level >= 2);
@@ -76,7 +90,9 @@ export class MarkdownRenderer {
         if (child.type === 'image' && child.attrGet('src')?.startsWith(marker)) {
           const index = Number(child.attrGet('src')!.slice(marker.length));
           const embed = embeds[index]!;
-          const resolved = images.resolve(embed.reference);
+          const binding = bindings?.['w:' + embed.reference];
+          const resolved = binding ? { ...binding, path: binding.path?.replace(/^_images\//, '') }
+            : bindings && !/^(\.\/|_images\/)/.test(embed.reference) ? { reason: 'missing' as const } : images.resolve(embed.reference);
           if (resolved.path) {
             const relative = '_images/' + resolved.path;
             child.attrSet('src', this.basePath + '/media/' + relative.split('/').map(encodeURIComponent).join('/'));
@@ -93,6 +109,14 @@ export class MarkdownRenderer {
         const attribute = child.type === 'link_open' ? 'href' : child.type === 'image' ? 'src' : null;
         if (!attribute) continue;
         const original = child.attrGet(attribute) || '';
+        const bound = child.type === 'image' ? bindings?.['m:' + original] : undefined;
+        if (bound) {
+          if (bound.path) {
+            child.attrSet('src', this.basePath + '/media/' + bound.path.split('/').map(encodeURIComponent).join('/'));
+            child.attrSet('data-media-path', bound.path); child.attrSet('loading', 'lazy');
+          } else { child.type = 'import_image_missing'; child.meta = { reference: original, reason: bound.reason }; }
+          continue;
+        }
         const target = resolveLocalLink(original, source);
         if (target) {
           if (/\.md$/i.test(target.path) && child.type === 'link_open') {
@@ -126,6 +150,11 @@ export class MarkdownRenderer {
       const { index: occurrence, reference, reason } = items[index]!.meta as { index: number; reference: string; reason: 'missing' | 'ambiguous' };
       const label = this.t(reason === 'ambiguous' ? 'image.ambiguous' : 'image.missing', { name: reference });
       return `<span class="image-unresolved" data-image-index="${occurrence}" data-image-name="${escape(reference)}" role="img" aria-label="${escape(label)}" title="${escape(label)}">&#9888;</span>`;
+    };
+    this.parser.renderer.rules.import_image_missing = (items, index) => {
+      const { reference, reason } = items[index]!.meta;
+      const label = this.t(reason === 'ambiguous' ? 'image.ambiguous' : 'image.missing', { name: reference });
+      return `<span class="image-unresolved" role="img" aria-label="${escape(label)}" title="${escape(label)}">&#9888;</span>`;
     };
     this.parser.renderer.rules.heading_close = (items, index) => {
       const opening = items[index - 2];

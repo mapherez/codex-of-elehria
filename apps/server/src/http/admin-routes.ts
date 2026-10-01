@@ -24,7 +24,7 @@ export function adminRoutes(service: WikiService, renderer: MarkdownRenderer, to
     service.get(req.params.id);
     const version = await service.repository.version(req.params.id, req.params.commit);
     const notes = renderer.noteIndex([...service.pages.filter(page => page.id !== req.params.id), { ...version, deleted: false }]);
-    res.json({ ...version, ...renderer.render(version.content, version.path, await images.index(), notes) });
+    res.json({ ...version, ...renderer.render(version.content, version.path, await images.index(), notes, version.imageBindings) });
   });
   router.get('/pages/:id/diff', async (req, res) => {
     service.get(req.params.id);

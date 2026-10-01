@@ -1,5 +1,6 @@
 import type { CreatePageInput, DeletePageInput, DiffResponse, HistoryEntry, MovePageInput, MutationResult, PageRecord, PublishPageInput, RepairImageInput, SavePageInput, VersionResponse } from '../../../../packages/contracts';
 import { WikiClient } from '../lib/api';
+import type { NoxJob, NoxListing, NoxSettings, NoxVault } from '../../../../packages/contracts/nox-sync';
 
 export class AdminClient extends WikiClient {
   private token = '';
@@ -7,7 +8,7 @@ export class AdminClient extends WikiClient {
   initialize(): Promise<void> {
     return this.initialization ??= this.request<{ token: string }>('/admin/session').then(session => { this.token = session.token; }).catch(error => { this.initialization = undefined; throw error; });
   }
-  private async mutate(endpoint: string, method: string, body: unknown): Promise<MutationResult> {
+  private async mutate<T = MutationResult>(endpoint: string, method: string, body: unknown): Promise<T> {
     await this.initialize();
     return this.request(endpoint, { method, headers: { 'content-type': 'application/json', 'x-wiki-token': this.token }, body: JSON.stringify(body) });
   }
@@ -22,4 +23,13 @@ export class AdminClient extends WikiClient {
   history(id: string): Promise<HistoryEntry[]> { return this.request('/admin/pages/' + id + '/history'); }
   version(id: string, commit: string): Promise<VersionResponse> { return this.request(`/admin/pages/${id}/versions/${commit}`); }
   diff(id: string, from: string, to: string): Promise<DiffResponse> { return this.request(`/admin/pages/${id}/diff?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`); }
+  noxSettings(): Promise<NoxSettings> { return this.request('/admin/nox/connection'); }
+  noxConnect(input: { url: string; apiKey: string }): Promise<{ settings: NoxSettings; vaults: NoxVault[] }> { return this.mutate('/admin/nox/connection', 'PUT', input); }
+  noxDisconnect(): Promise<NoxSettings> { return this.mutate('/admin/nox/connection', 'DELETE', {}); }
+  noxVaults(): Promise<NoxVault[]> { return this.request('/admin/nox/vaults'); }
+  noxFiles(vaultId: string): Promise<NoxListing> { return this.request('/admin/nox/files?vaultId=' + encodeURIComponent(vaultId)); }
+  noxPrepare(listingId: string, paths: string[]): Promise<NoxJob> { return this.mutate('/admin/nox/imports', 'POST', { listingId, paths }); }
+  noxJob(id: string): Promise<NoxJob> { return this.request('/admin/nox/imports/' + id); }
+  noxCancel(id: string): Promise<NoxJob> { return this.mutate('/admin/nox/imports/' + id, 'DELETE', {}); }
+  noxApply(id: string, decisions: Record<string, 'keep' | 'replace'>, confirmReplace: boolean): Promise<NoxJob> { return this.mutate('/admin/nox/imports/' + id + '/apply', 'POST', { decisions, confirmReplace }); }
 }

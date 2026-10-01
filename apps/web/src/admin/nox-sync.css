@@ -1,0 +1,42 @@
+.codex .nox-panel { font-size: .9rem; }
+.codex .nox-intro { margin-top: 0; color: var(--codex-muted); line-height: 1.6; }
+.codex .import-steps { list-style: none; margin: 1.5rem 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: .5rem; }
+.codex .import-steps li { color: var(--codex-muted); font-size: .68rem; display: grid; gap: .4rem; }
+.codex .import-steps span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border: 1px solid var(--codex-line); border-radius: 50%; font-size: .75rem; }
+.codex .import-steps .current { color: var(--codex-accent); }
+.codex .import-steps .current span { background: #cfb9911a; border-color: var(--codex-accent); }
+.codex .drawer-form input, .codex .nox-panel > input { display: block; width: 100%; font-size: 1rem; }
+.codex .drawer-form label, .codex .filter-label { display: block; margin: 1.2rem 0 .5rem; font-weight: 550; }
+.codex .nox-panel input:is([type=checkbox],[type=radio]) { accent-color: var(--codex-accent); width: 1.1rem; height: 1.1rem; flex-shrink: 0; padding: 0; }
+.codex .select-all, .codex .import-tree label, .codex .import-review fieldset label, .codex .replacement-confirm { display: flex; align-items: center; gap: .7rem; min-height: 48px; cursor: pointer; }
+.codex .select-all { border-bottom: 1px solid var(--codex-line); margin-top: .7rem; }
+.codex .import-tree { list-style: none; padding: 0; margin: 0; }
+.codex .import-tree .import-tree { padding-inline-start: 1.4rem; border-inline-start: 1px solid var(--codex-line); margin-inline-start: .6rem; }
+.codex .import-tree span { overflow-wrap: anywhere; }
+.codex .import-tree summary { display: flex; align-items: center; cursor: pointer; gap: .5rem; }
+.codex .import-tree summary::before { content: '›'; color: var(--codex-muted); transition: transform 160ms; }
+.codex .import-tree details[open] > summary::before { transform: rotate(90deg); }
+.codex .import-tree label:hover { color: var(--codex-accent); }
+.codex .import-footer { position: sticky; bottom: -1.5rem; padding: 1rem 0; margin-top: 1rem; background: var(--codex-bg); border-top: 1px solid var(--codex-line); display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; }
+.codex .import-footer p { flex-basis: 100%; margin: 0; font-size: .8rem; }
+.codex .vault-context { color: var(--codex-accent); overflow-wrap: anywhere; }
+.codex .vault-list { display: grid; gap: .5rem; }
+.codex .vault-list svg { margin-inline-start: auto; }
+.codex .import-progress progress { width: 100%; accent-color: var(--codex-accent); }
+.codex .import-review { border: 1px solid var(--codex-line); border-radius: .7rem; padding: 1rem; margin-block: .7rem; background: #ffffff02; }
+.codex .import-review.conflict { border-color: #8d7750; }
+.codex .import-review header { display: flex; flex-wrap: wrap; gap: .6rem; align-items: start; }
+.codex .import-review strong { flex: 1; font-size: .85rem; overflow-wrap: anywhere; }
+.codex .import-status { font-size: .7rem; color: var(--codex-accent); padding: .2rem .5rem; border-radius: 1rem; background: #cfb99112; }
+.codex .import-warning { font-size: .8rem; color: var(--codex-accent); overflow-wrap: anywhere; }
+.codex .import-review summary { cursor: pointer; margin-top: 1rem; }
+.codex .import-review pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow: auto; font-size: .75rem; padding: .75rem; background: #0003; border-radius: .4rem; }
+.codex .import-review fieldset { margin-top: 1rem; padding: .4rem .7rem; border: 1px solid var(--codex-line); border-radius: .5rem; }
+.codex .import-review legend { font-size: .75rem; color: var(--codex-muted); }
+.codex .replacement-confirm { align-items: start; font-size: .85rem; line-height: 1.6; padding-block: .8rem; }
+.codex .import-success { color: #a7d3b5; }
+.codex .import-results { list-style: none; padding: 0; }
+.codex .import-results li { display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid var(--codex-line); padding-block: .7rem; }
+.codex .import-results span { flex: 1; overflow-wrap: anywhere; }
+.codex .import-resume { margin-bottom: 1rem; }
+@media (prefers-reduced-motion: reduce) { .codex .import-tree summary::before { transition: none; } }

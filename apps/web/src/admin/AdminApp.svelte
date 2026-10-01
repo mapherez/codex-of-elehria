@@ -10,6 +10,8 @@
   import PageAction from './PageAction.svelte';
   import HistoryView from './HistoryView.svelte';
   import DeletedPages from './DeletedPages.svelte';
+  import ActionIcon from './ActionIcon.svelte';
+  import NoxSyncPanel from './NoxSyncPanel.svelte';
   import { AdminClient } from './admin-client';
   import { ImagePicker } from './image-picker';
   import './admin.css';
@@ -26,17 +28,21 @@
   let actionsOpen = $state(false);
   let pendingAction: (() => void) | null = null;
   let editorControls = $state<{ save: () => void; busy: boolean } | null>(null);
-  let view = $state<'read' | 'edit' | 'history' | 'deleted'>('read');
+  let view = $state<'read' | 'edit'>('read');
+  let drawerView = $state<'actions' | 'history' | 'deleted' | 'move' | 'delete' | 'nox'>('actions');
+  let noxTitle = $state(t('nox.title'));
+  let noxBack: () => void = () => drawerView = 'actions';
+  const drawerTitle = $derived(drawerView === 'nox' ? noxTitle : t(drawerView === 'history' ? 'history.title' : drawerView === 'deleted' ? 'history.removedTitle' : drawerView === 'move' ? 'move.title' : drawerView === 'delete' ? 'delete.title' : 'admin.actions'));
   let current = $state<PageResponse | null>(null);
   let original = $state<PageRecord | null>(null);
   let historyId = $state('');
+  let historyParent = $state<'actions' | 'deleted'>('actions');
   let dirty = $state(false);
   let busy = $state(false);
   let publishing = $state(false);
   let external = $state(false);
   let error = $state<ApiError['error'] | null>(null);
   let notice = $state('');
-  let action = $state<'move' | 'delete' | null>(null);
   let refreshKey = $state(0);
   let pickingImage = false;
   function runAction(next: () => void) { pendingAction = next; actionsOpen = false; }
@@ -78,17 +84,29 @@
   }
   function create() { if (canLeave()) { original = null; dirty = false; view = 'edit'; external = false; notice = ''; } }
   function saved(result: MutationResult) {
-    dirty = false; action = null; view = 'read'; external = false; error = null;
+    dirty = false; drawerView = 'actions'; view = 'read'; external = false; error = null;
     notice = t(result.page.deleted ? 'editor.deleted' : result.unchanged ? 'editor.unchanged' : 'editor.saved');
     route.navigate(result.page.deleted ? 'home.md' : result.page.path);
     refreshKey++;
   }
-  function history(id: string) { if (canLeave()) { historyId = id; dirty = false; view = 'history'; } }
+  function history(id: string) { if (canLeave()) { historyParent = drawerView === 'deleted' ? 'deleted' : 'actions'; historyId = id; drawerView = 'history'; } }
   onMount(() => route.connect(() => { if (!canLeave()) return false; view = 'read'; dirty = false; return true; }));
 </script>
 
 <svelte:window onbeforeunload={event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } }} />
+{#snippet actionButton(name: 'edit' | 'save' | 'publish' | 'history' | 'move' | 'delete' | 'create' | 'deleted' | 'nox' | 'cancel', label: string, handler: () => void, disabled = false, primary = false, danger = false)}
+  <button class="action-row" class:primary class:danger {disabled} onclick={handler}><ActionIcon {name} /><span>{label}</span></button>
+{/snippet}
 {#snippet actions()}
+  <div hidden={drawerView !== 'nox'}><NoxSyncPanel {client} {t} active={drawerView === 'nox'} onExit={() => drawerView = 'actions'}
+    onNavigation={(title, back) => { noxTitle = title; noxBack = back; }} onImported={() => refreshKey++}
+    onOpen={path => runAction(() => navigate(path))} /></div>
+  {#if drawerView === 'history'}
+    {#key historyId}<HistoryView id={historyId} {client} {t} locale={config.locale} onClose={() => drawerView = 'actions'} showClose={false} />{/key}
+  {:else if drawerView === 'deleted'}<DeletedPages {client} {t} onSelect={history} onClose={() => drawerView = 'actions'} showClose={false} />
+  {:else if (drawerView === 'move' || drawerView === 'delete') && current}
+    {#key drawerView}<PageAction action={drawerView} page={current} {client} {t} onDone={saved} onClose={() => drawerView = 'actions'} />{/key}
+  {:else if drawerView === 'actions'}
   <div class="admin-actions">
     {#if current && !(view === 'edit' && !original)}
       <div class="drawer-page-context"><span>{current.path.replace(/\.md$/i, '').split('/').join(' / ')}</span>
@@ -98,44 +116,45 @@
     {/if}
     {#if view === 'edit'}
       <div class="drawer-action-group">
-        <button class="primary" onclick={() => { const controls = editorControls; if (controls) runAction(controls.save); }} disabled={!editorControls || editorControls.busy}>{t(editorControls?.busy ? 'editor.saving' : 'action.save')}</button>
-        <button onclick={() => runAction(close)} disabled={editorControls?.busy}>{t('action.cancel')}</button>
+        <h3>{t('admin.pageActions')}</h3>
+        {@render actionButton('save', t(editorControls?.busy ? 'editor.saving' : 'action.save'), () => { const controls = editorControls; if (controls) runAction(controls.save); }, !editorControls || editorControls.busy, true)}
+        {@render actionButton('cancel', t('action.cancel'), () => runAction(close), editorControls?.busy)}
       </div>
-    {:else if view !== 'read'}
-      <div class="drawer-action-group"><button onclick={() => runAction(close)}>{t('action.close')}</button></div>
     {/if}
     {#if current && view === 'read'}
       <div class="drawer-action-group">
-        <button onclick={() => runAction(() => { void edit(); })} disabled={busy || publishing}>{t('action.edit')}</button>
-        <button class="primary" onclick={() => { const page = current; if (page) runAction(() => { void publish(page); }); }} disabled={busy || publishing}>{t(publishing ? 'publication.publishing' : 'action.publish')}</button>
-        <button onclick={() => { const page = current; if (page) runAction(() => history(page.id)); }}>{t('action.history')}</button>
+        <h3>{t('admin.pageActions')}</h3>
+        {@render actionButton('edit', t('action.edit'), () => runAction(() => { void edit(); }), busy || publishing)}
+        {@render actionButton('publish', t(publishing ? 'publication.publishing' : 'action.publish'), () => { const page = current; if (page) void publish(page); }, busy || publishing, true)}
+        {@render actionButton('history', t('action.history'), () => { if (current) history(current.id); })}
         {#if current.path !== 'home.md'}
-          <button onclick={() => runAction(() => action = 'move')} disabled={publishing}>{t('action.move')}</button>
-          <button class="danger" onclick={() => runAction(() => action = 'delete')} disabled={publishing}>{t('action.delete')}</button>
+          {@render actionButton('move', t('action.move'), () => drawerView = 'move', publishing)}
+          {@render actionButton('delete', t('action.delete'), () => drawerView = 'delete', publishing, false, true)}
         {/if}
       </div>
     {/if}
     <div class="drawer-action-group">
-      <button onclick={() => runAction(create)} disabled={editorControls?.busy || publishing}>{t('action.create')}</button>
-      <button onclick={() => runAction(() => { if (canLeave()) { view = 'deleted'; dirty = false; } })} disabled={editorControls?.busy || publishing}>{t('action.deleted')}</button>
+      <h3>{t('admin.serverActions')}</h3>
+      {@render actionButton('create', t('action.create'), () => runAction(create), editorControls?.busy || publishing)}
+      {@render actionButton('deleted', t('action.deleted'), () => { if (canLeave()) drawerView = 'deleted'; }, editorControls?.busy || publishing)}
+      {@render actionButton('nox', t('nox.title'), () => { drawerView = 'nox'; }, editorControls?.busy || publishing)}
     </div>
   </div>
+  {/if}
 {/snippet}
 {#snippet toolbar(_page: PageResponse | null)}
   {#if error}<p class="notice error" role="alert">{t(error.code, error.params)}</p>{/if}
   {#if notice}<p class="save-notice" role="status">{notice}</p>{/if}
-  {#if action && current}<PageAction {action} page={current} {client} {t} onDone={saved} onClose={() => action = null} />{/if}
 {/snippet}
 {#snippet workspace()}
   {#if view === 'edit'}
     {#key original?.id || 'new'}<MarkdownEditor page={original} {client} {t} changedElsewhere={external} onSaved={saved} onCancel={close} onDirty={value => dirty = value} onControls={controls => editorControls = controls} />{/key}
-  {:else if view === 'history'}
-    {#key historyId}<HistoryView id={historyId} {client} {t} locale={config.locale} onClose={close} showClose={false} />{/key}
-  {:else if view === 'deleted'}<DeletedPages {client} {t} onSelect={history} onClose={close} showClose={false} />{/if}
+  {/if}
 {/snippet}
 
-<AppShell {config} {t} {navigationId} bind:navigationOpen bind:actionsOpen {actions} onActionsClosed={actionsClosed} onHome={() => navigate('home.md')}>
-  <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} toolbar={error || notice || action ? toolbar : undefined} {refreshKey}
+<AppShell {config} {t} {navigationId} bind:navigationOpen bind:actionsOpen {actions} onActionsClosed={actionsClosed} onHome={() => navigate('home.md')}
+  actionsTitle={drawerTitle} actionsWide={drawerView === 'nox' || drawerView === 'history'} onActionsBack={drawerView === 'actions' ? undefined : () => { if (drawerView === 'nox') noxBack(); else drawerView = drawerView === 'history' ? historyParent : 'actions'; }}>
+  <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} toolbar={error || notice ? toolbar : undefined} {refreshKey}
     onImagePick={repairImage} showLinkWarnings
     {navigationId} bind:navigationOpen
     body={view === 'read' ? undefined : workspace} onNavigate={navigate}

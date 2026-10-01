@@ -9,7 +9,13 @@ export interface PageRecord {
   deleted: boolean;
   updatedAt: string;
   content: string;
+  origin?: ImportOrigin;
+  imageBindings?: ImageBindings;
 }
+export interface ImportOrigin {
+  connectionId: string; vaultId: string; path: string; hash: string; remoteRevision: number; importedRevision: string;
+}
+export type ImageBindings = Record<string, { path?: string; reason?: 'missing' | 'ambiguous' }>;
 export interface Heading { id: string; text: string; level: number }
 export interface RenderedMarkdown { title: string; html: string; headings: Heading[] }
 export interface PublishedPage extends RenderedMarkdown {
@@ -21,6 +27,7 @@ export type NavigationNode =
 export interface Publication {
   schema: 1; revision: string; publishedAt: string;
   navigation: NavigationNode[]; pages: PublishedPage[];
+  importedMedia?: string[];
 }
 export interface NavigationResponse { revision: string; navigation: NavigationNode[]; count: number }
 export type PublicationStatus = 'draft' | 'published' | 'changes';

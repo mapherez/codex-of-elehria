@@ -48,3 +48,20 @@
 .codex .drawer-action-group { display: grid; gap: .65rem; }
 .codex .drawer-action-group + .drawer-action-group { padding-top: 1.5rem; border-top: 1px solid var(--codex-line); }
 .codex .drawer-action-group button { width: 100%; text-align: start; min-height: 44px; }
+.codex .drawer-action-group { gap: .25rem; }
+.codex .drawer-action-group h3 { margin: 0 0 .5rem; font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; color: var(--codex-muted); font-weight: 550; }
+.codex button.action-row { display: flex; align-items: center; gap: .85rem; background: transparent; border: 1px solid transparent; border-radius: .65rem; min-height: 48px; padding: .8rem; font-size: .9rem; transition: background 150ms, border-color 150ms; }
+.codex button.action-row svg { color: var(--codex-muted); flex-shrink: 0; }
+.codex button.action-row:hover:not(:disabled) { background: #ffffff07; border-color: var(--codex-line); }
+.codex button.action-row.primary { background: #cfb99116; border-color: #cfb99138; color: var(--codex-accent); }
+.codex button.action-row.primary svg { color: var(--codex-accent); }
+.codex button.action-row.primary:hover:not(:disabled) { background: #cfb99126; border-color: #cfb99170; }
+.codex button.action-row.danger { color: #e2a4a4; }
+.codex button.action-row.danger svg { color: inherit; }
+.codex button.action-row.danger:hover:not(:disabled) { background: #d06d6d10; border-color: #d06d6d40; }
+.codex.side-drawer .workspace-heading { display: none; }
+.codex.side-drawer .workspace-title { font-size: 1.1rem; }
+.codex.side-drawer .history-list { max-height: none; }
+.codex.side-drawer .history-list li > div { min-width: 0; overflow-wrap: anywhere; }
+.codex.side-drawer .version-controls code { overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .codex button.action-row { transition: none; } }

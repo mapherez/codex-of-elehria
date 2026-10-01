@@ -21,6 +21,19 @@ export async function safeFile(root: string, relative: string): Promise<string> 
   return current;
 }
 
+export function assertImportPath(file: string, others: string[]) {
+  const segments = file.split('/');
+  for (const other of others) {
+    const lower = file.toLowerCase(); const compared = other.toLowerCase();
+    if (lower === compared || lower.startsWith(compared + '/') || compared.startsWith(lower + '/')) throw new DomainError('error.pathExists', 409);
+    const parts = other.split('/');
+    for (let index = 0; index < Math.min(segments.length, parts.length) - 1; index++) {
+      if (segments[index]!.toLowerCase() !== parts[index]!.toLowerCase()) break;
+      if (segments[index] !== parts[index]) throw new DomainError('error.pathExists', 409);
+    }
+  }
+}
+
 export async function atomicWrite(file: string, data: string): Promise<void> {
   await fs.mkdir(path.dirname(file), { recursive: true });
   const temporary = `${file}.${randomUUID()}.tmp`;

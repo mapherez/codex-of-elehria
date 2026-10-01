@@ -16,6 +16,9 @@ import { WikiService } from '../services/wiki-service';
 import { PublishedVersions } from '../services/published-versions';
 import { adminRoutes } from './admin-routes';
 import { securityHeaders, localAccess, errorHandler } from './security';
+import { NoxSync } from '../services/nox-sync';
+import { noxRoutes } from './nox-routes';
+import { isImportedImage } from '../domain/imported-images';
 
 const mediaTypes: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif', '.svg': 'image/svg+xml' };
 const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
@@ -24,6 +27,7 @@ export async function createApplication(config: RuntimeConfig) {
   const t = createTranslator(config.site.locale, config.messages);
   const renderer = new MarkdownRenderer(t, config.site.basePath);
   let wiki: WikiService | undefined;
+  let nox: NoxSync | undefined;
   if (config.mode === 'admin') {
     const repository = new GitRepository(config.stateDir, config.site.gitAuthor);
     const published = new PublishedVersions(config.stateDir, config.contentDir, repository, new Publisher(config.contentDir, renderer, config.site.locale));
@@ -32,6 +36,8 @@ export async function createApplication(config: RuntimeConfig) {
       new ContentFiles(config.contentDir, config.site.maxPageBytes),
       new Publisher(config.contentDir, renderer, config.site.locale, config.stateDir), published, t);
     await wiki.initialize();
+    nox = new NoxSync(config.stateDir, config.contentDir, config.site.maxPageBytes, wiki);
+    try { await nox.initialize(); } catch (error) { await nox.close(); await wiki.close(); throw error; }
   }
   const reader = new PublicationReader(config.mode === 'admin' ? config.stateDir : config.contentDir, t);
   await reader.start(config.site.publicationPollMs);
@@ -75,8 +81,13 @@ export async function createApplication(config: RuntimeConfig) {
     req.on('close', () => clients.delete(res));
   });
   if (wiki) routes.use('/api/admin', adminRoutes(wiki, renderer, token, new ImageFiles(config.contentDir)));
+  if (nox) routes.use('/api/admin/nox', noxRoutes(nox));
   routes.get(/^\/media\/(.+)$/, async (req, res) => {
     const relative = String(req.params[0]);
+    if (config.mode === 'public' && isImportedImage(relative)) {
+      await reader.refresh();
+      if (!reader.current?.importedMedia?.includes(relative)) throw new DomainError('error.notFound', 404);
+    }
     const type = mediaTypes[path.extname(relative).toLowerCase()];
     if (!type) throw new DomainError('error.notFound', 404);
     const file = await safeFile(config.contentDir, relative);
@@ -112,12 +123,13 @@ export async function createApplication(config: RuntimeConfig) {
   app.use((_req, _res, next) => next(new DomainError('error.notFound', 404)));
   app.use(errorHandler);
   return {
-    app, wiki, reader,
+    app, wiki, reader, nox,
     async close(): Promise<void> {
       clearInterval(heartbeat);
       for (const response of clients) response.end();
       clients.clear();
       await reader.close();
+      await nox?.close();
       await wiki?.close();
     }
   };

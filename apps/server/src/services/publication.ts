@@ -9,6 +9,7 @@ import { buildNavigation } from '../domain/navigation';
 import { MarkdownRenderer } from '../domain/markdown';
 import { atomicWrite, readJson, serialize } from '../infrastructure/filesystem';
 import { ImageFiles } from '../infrastructure/image-files';
+import { isImportedImage } from '../domain/imported-images';
 
 export const publicationPath = (root: string): string => path.join(root, '.wiki', 'publication.json');
 
@@ -23,12 +24,16 @@ export class Publisher {
       pages: pages.filter(page => !page.deleted).map(page => ({
         id: page.id, path: page.path, aliases: page.aliases, revision: page.revision,
         ...(status ? { publicationStatus: status(page) } : {}),
-        ...this.renderer.render(page.content, page.path, images, notes)
+        ...this.renderer.render(page.content, page.path, images, notes, page.imageBindings)
       }))
     };
+    snapshot.importedMedia = [...new Set(snapshot.pages.flatMap(page =>
+      [...page.html.matchAll(/data-media-path="([^"]+)"/g)].map(match => match[1]!.replace(/&(?:amp|quot|#39|lt|gt);/g,
+        entity => ({ '&amp;': '&', '&quot;': '"', '&#39;': "'", '&lt;': '<', '&gt;': '>' })[entity]!)).filter(isImportedImage)
+    ))].sort();
     // Rendering can change after an image is added or the renderer is upgraded,
     // even when the Markdown commit is unchanged.
-    snapshot.revision += ':' + createHash('sha256').update(JSON.stringify({ navigation: snapshot.navigation, pages: snapshot.pages })).digest('hex');
+    snapshot.revision += ':' + createHash('sha256').update(JSON.stringify({ navigation: snapshot.navigation, pages: snapshot.pages, importedMedia: snapshot.importedMedia })).digest('hex');
     return snapshot;
   }
   async publish(pages: PageRecord[], revision: string, status?: (page: PageRecord) => PublicationStatus): Promise<void> {
