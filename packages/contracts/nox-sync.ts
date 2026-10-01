@@ -7,7 +7,8 @@ export const noxApplySchema = z.object({ decisions: z.record(z.string(), z.enum(
 export interface NoxSettings { url: string; hasKey: boolean; connectionId?: string }
 export interface NoxVault { vaultId: string; name: string; revision: number }
 export interface NoxFile { path: string; hash: string; size: number; revision: number }
-export interface NoxListing { listingId: string; vaultId: string; serverRevision: number; files: NoxFile[] }
+export interface ImportNoteState { status: ImportStatus; targetPath: string; reason?: ApiError['error'] }
+export interface NoxListing { listingId: string; vaultId: string; serverRevision: number; files: NoxFile[]; notes: Record<string, ImportNoteState> }
 export type ImportStatus = 'new' | 'update' | 'unchanged' | 'conflict' | 'blocked';
 export interface ImportReview {
   path: string; targetPath: string; status: ImportStatus; reason?: ApiError['error']; warnings: { reference: string; reason: 'missing' | 'ambiguous' }[];

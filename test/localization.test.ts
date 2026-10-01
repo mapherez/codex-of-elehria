@@ -34,3 +34,14 @@ test('JSON dictionaries interpolate values and support locale overrides', () => 
   assert.equal(translated('action.save'), 'Publish version');
   assert.equal(translated('git.move', { from: 'a.md', path: 'b.md' }), 'Move a.md to b.md');
 });
+
+test('incomplete server dictionaries retain bundled messages and supplied overrides', () => {
+  for (const locale of ['en', 'fr']) {
+    const translated = createTranslator(locale, { 'action.save': 'Custom save' });
+    assert.equal(translated('action.save'), 'Custom save');
+    assert.equal(translated('nox.stateUnchanged'), english['nox.stateUnchanged']);
+    assert.equal(translated('nox.stateProblem'), english['nox.stateProblem']);
+    assert.equal(translated('nox.stateAvailable'), english['nox.stateAvailable']);
+    assert.equal(translated('nox.settings'), english['nox.settings']);
+  }
+});

@@ -8,11 +8,11 @@ export type Values = Record<string, string | number>;
 export type Translator = (key: MessageKey, values?: Values) => string;
 export { english };
 
-export function createTranslator(locale = 'en', dictionary: Dictionary = english): Translator {
+export function createTranslator(locale = 'en', dictionary: Partial<Dictionary> = english): Translator {
   const instance = createInstance();
   void instance.init({
     lng: locale, fallbackLng: 'en', keySeparator: false, initImmediate: false, showSupportNotice: false,
-    resources: { en: { translation: english }, [locale]: { translation: dictionary } },
+    resources: { en: { translation: english }, [locale]: { translation: { ...english, ...dictionary } } },
     interpolation: { escapeValue: false }
   });
   return (key, values) => instance.t(key, values || {});

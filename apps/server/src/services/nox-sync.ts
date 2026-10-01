@@ -140,7 +140,17 @@ export class NoxSync {
     const parsed = remoteFiles.safeParse(await this.json(connection, '/v1/files?' + new URLSearchParams({ vaultId })));
     if (!parsed.success || parsed.data.vaultId !== vaultId || new Set(parsed.data.files.map(file => file.path)).size !== parsed.data.files.length) throw new DomainError('error.noxContract', 502);
     if (connection.id !== this.connection?.id || connection.apiKey !== this.connection.apiKey) throw new DomainError('error.noxExpired', 409);
-    const listing = { ...parsed.data, listingId: randomUUID() };
+    const reviewed = this.reviewFiles(parsed.data.files.filter(file => /\.md$/i.test(file.path)), connection, vaultId);
+    const vaultKey = this.vaultKey(vaultId);
+    for (const { review, page } of reviewed) if (page?.id) {
+      const local = this.wiki.get(page.id);
+      const linked = bindImportedImages(local.content, page.origin.path, parsed.data.files, image => importedImagePath(connection.id, vaultKey, image));
+      const same = createHash('sha256').update(local.content).digest('hex') === page.origin.hash
+        && local.origin?.hash === page.origin.hash && JSON.stringify(local.imageBindings || {}) === JSON.stringify(linked.bindings);
+      review.status = same ? 'unchanged' : local.revision === local.origin?.importedRevision ? 'update' : 'conflict';
+    }
+    const notes = Object.fromEntries(reviewed.map(({ review }) => [review.path, { status: review.status, targetPath: review.targetPath, reason: review.reason }]));
+    const listing: NoxListing = { ...parsed.data, listingId: randomUUID(), notes };
     this.listings.set(listing.listingId, { listing, connectionId: connection.id, expires: Date.now() + lifetime });
     return listing;
   }
@@ -208,17 +218,22 @@ export class NoxSync {
     if (size !== file.size || hash.digest('hex') !== file.hash) throw new DomainError('error.noxIntegrity', 502);
     job.public.completed++; return target;
   }
-  private async prepareFiles(job: Prepared, connection: Connection, selected: NoxFile[]) {
-    await fs.mkdir(job.directory, { recursive: true });
-    const vaultId = job.selection.listing.vaultId;
-    // Hash the opaque vault ID for a stable, filesystem-safe namespace.
-    const vaultKey = createHash('sha256').update(vaultId).digest('hex').slice(0, 24);
-    const reviews = selected.map(file => this.review(file, connection, vaultId));
+  private vaultKey(vaultId: string) { return createHash('sha256').update(vaultId).digest('hex').slice(0, 24); }
+  private reviewFiles(files: NoxFile[], connection: Connection, vaultId: string) {
+    const reviews = files.map(file => this.review(file, connection, vaultId));
     const targets = reviews.filter(item => item.page).map(item => item.page!.path);
     for (const item of reviews) if (item.page) {
       try { assertImportPath(item.page.path, targets.filter(target => target !== item.page!.path)); }
       catch { item.review.status = 'blocked'; item.review.reason = { code: 'error.pathExists' }; item.page = undefined; }
     }
+    return reviews;
+  }
+  private async prepareFiles(job: Prepared, connection: Connection, selected: NoxFile[]) {
+    await fs.mkdir(job.directory, { recursive: true });
+    const vaultId = job.selection.listing.vaultId;
+    // Hash the opaque vault ID for a stable, filesystem-safe namespace.
+    const vaultKey = this.vaultKey(vaultId);
+    const reviews = this.reviewFiles(selected, connection, vaultId);
     job.public.reviews = reviews.map(item => item.review);
     job.public.total = reviews.filter(item => item.page).length;
     await parallel(reviews.map((item, index) => ({ ...item, file: selected[index]! })), async ({ page, review, file }) => {

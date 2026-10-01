@@ -32,6 +32,7 @@ test('NoX imports remain private, preserve original Markdown, and publish immuta
     assert.equal(JSON.stringify(connection).includes('test-private-key'), false);
     assert.equal((await publicApp.request('/api/admin/nox/connection')).status, 404);
     const listing = await nox.list('vault-id');
+    assert.equal(listing.notes['World/Humans.md']!.status, 'new');
     let job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: ['World/Humans.md', 'World/Other.md'] }).id);
     assert.equal(job.state, 'ready'); assert.deepEqual(job.reviews.map(review => review.status), ['new', 'new']);
     const beforeHead = await admin.service.wiki!.repository.head();
@@ -53,6 +54,7 @@ test('NoX imports remain private, preserve original Markdown, and publish immuta
     assert.equal(await (await publicApp.request('/media/' + portrait.split('/').map(encodeURIComponent).join('/'))).text(), 'second-portrait');
     remote.put('Attachments/art.png', 'second-image');
     const next = await nox.list('vault-id');
+    assert.equal(next.notes['World/Humans.md']!.status, 'update');
     job = await ready(nox, nox.prepare({ listingId: next.listingId, paths: ['World/Humans.md'] }).id);
     assert.equal(job.reviews[0]!.status, 'update');
     await nox.apply(job.id, { decisions: {}, confirmReplace: false });
@@ -93,12 +95,15 @@ test('NoX reimports detect local edits, no-op unchanged notes, protect paths and
     await nox.apply(job.id, { decisions: {}, confirmReplace: false });
     const human = wiki.pages.find(page => page.path === 'World/Humans.md')!;
     listing = await nox.list('vault-id');
+    assert.equal(listing.notes['World/Humans.md']!.status, 'unchanged');
+    assert.equal(listing.notes['home.md']!.status, 'blocked');
     job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: ['World/Humans.md'] }).id);
     assert.equal(job.reviews[0]!.status, 'unchanged'); const head = await wiki.repository.head();
     await nox.apply(job.id, { decisions: {}, confirmReplace: false }); assert.equal(await wiki.repository.head(), head);
     await wiki.save(human.id, { content: '# Humans\nLocal change.', revision: human.revision });
     remote.put('World/Humans.md', '# Humans\nRemote two.');
     listing = await nox.list('vault-id');
+    assert.equal(listing.notes['World/Humans.md']!.status, 'conflict');
     job = await ready(nox, nox.prepare({ listingId: listing.listingId, paths: ['World/Humans.md'] }).id);
     assert.equal(job.reviews[0]!.status, 'conflict');
     assert.equal(job.reviews[0]!.localContent, '# Humans\nLocal change.');
