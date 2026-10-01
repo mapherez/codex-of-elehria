@@ -26,6 +26,7 @@
   let historyId = $state('');
   let dirty = $state(false);
   let busy = $state(false);
+  let publishing = $state(false);
   let external = $state(false);
   let error = $state<ApiError['error'] | null>(null);
   let notice = $state('');
@@ -57,10 +58,20 @@
     catch (failure) { error = errorDetail(failure); }
     finally { busy = false; }
   }
+  async function publish(page: PageResponse) {
+    if (publishing) return;
+    publishing = true; error = null; notice = '';
+    try {
+      const result = await client.publish(page.id, { revision: page.revision });
+      notice = t(result.unchanged ? 'publication.unchanged' : 'publication.saved');
+      refreshKey++;
+    } catch (failure) { error = errorDetail(failure); }
+    finally { publishing = false; }
+  }
   function create() { if (canLeave()) { original = null; dirty = false; view = 'edit'; external = false; notice = ''; } }
   function saved(result: MutationResult) {
     dirty = false; action = null; view = 'read'; external = false; error = null;
-    notice = t(result.unchanged ? 'editor.unchanged' : 'editor.saved');
+    notice = t(result.page.deleted ? 'editor.deleted' : result.unchanged ? 'editor.unchanged' : 'editor.saved');
     route.navigate(result.page.deleted ? 'home.md' : result.page.path);
     refreshKey++;
   }
@@ -77,10 +88,14 @@
     {#if page}
       <button class="quiet" onclick={() => history(page.id)}>{t('action.history')}</button>
       {#if page.path !== 'home.md'}
-        <button class="quiet" onclick={() => action = 'move'}>{t('action.move')}</button>
-        <button class="quiet" onclick={() => action = 'delete'}>{t('action.delete')}</button>
+        <button class="quiet" onclick={() => action = 'move'} disabled={publishing}>{t('action.move')}</button>
+        <button class="quiet" onclick={() => action = 'delete'} disabled={publishing}>{t('action.delete')}</button>
       {/if}
-      <button class="primary" onclick={edit} disabled={busy}>{t('action.edit')}</button>
+      <span class="publication-actions">
+        {#if page.publicationStatus}<span class="publication-status" class:pending={page.publicationStatus !== 'published'}>{t(`publication.${page.publicationStatus}`)}</span>{/if}
+        <button onclick={edit} disabled={busy || publishing}>{t('action.edit')}</button>
+        <button class="primary" onclick={() => publish(page)} disabled={busy || publishing}>{t(publishing ? 'publication.publishing' : 'action.publish')}</button>
+      </span>
     {/if}
   {/if}
   {#if error}<p class="notice error" role="alert">{t(error.code, error.params)}</p>{/if}
@@ -97,7 +112,7 @@
 
 <AppShell {config} {t} admin onHome={() => navigate('home.md')}>
   <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} {toolbar} {refreshKey}
-    onImagePick={repairImage}
+    onImagePick={repairImage} showLinkWarnings
     body={view === 'read' ? undefined : workspace} onNavigate={navigate}
     onPublication={() => { if (view === 'edit') external = true; }}
     onPage={page => { current = page; document.title = page ? `${page.title} · ${config.brand.name}` : config.brand.name; }} />

@@ -17,10 +17,12 @@ test('URL prefixes apply to APIs, Markdown links and moved-page redirects', asyn
   assert.match(page.html, /href="\/knowledge\/"/);
   const moved = await admin.request(`/knowledge/api/admin/pages/${page.id}/move`, 'POST', { revision: page.revision, path: 'archive/first.md' });
   assert.equal(moved.status, 200);
+  const movedPage = (await moved.json() as MutationResult).page;
+  await admin.service.wiki!.publish(movedPage.id, { revision: movedPage.revision });
   await reader.service.reader.refresh();
   const redirect = await reader.request('/knowledge/wiki/guides/first.md');
   assert.equal(redirect.status, 302);
-  assert.equal(redirect.headers.get('location'), '/knowledge/wiki/archive/first.md');
+  assert.equal(redirect.headers.get('location'), '/knowledge/wiki/archive/first');
   assert.equal((await reader.request('/knowledge/api/admin/session')).status, 404);
 });
 
@@ -38,6 +40,8 @@ test('end-to-end persistence, history, explicit renames, aliases and local-only 
 
   let created = await (await admin.request('/api/admin/pages', 'POST', { path: 'notes/new page.md', content: '# New page\n\n## First\nVersion one.\n', message: 'Initial research' })).json() as MutationResult;
   const id = created.page.id;
+  assert.equal((await reader.request('/api/page?path=notes%2Fnew%20page.md')).status, 404);
+  await admin.service.wiki!.publish(id, { revision: created.page.revision });
   assert.equal((await reader.request('/api/page?path=notes%2Fnew%20page.md')).status, 200);
   const firstRevision = created.page.revision;
   const noChange = await (await admin.request('/api/admin/pages/' + id, 'PUT', { revision: firstRevision, content: created.page.content })).json() as MutationResult;
@@ -48,9 +52,10 @@ test('end-to-end persistence, history, explicit renames, aliases and local-only 
   assert.equal(conflict.status, 409);
   assert.equal((await conflict.json() as { error: { current: PageRecord } }).error.current.revision, created.page.revision);
   const moved = await (await admin.request(`/api/admin/pages/${id}/move`, 'POST', { revision: created.page.revision, path: 'archive/renamed.md' })).json() as MutationResult;
+  await admin.service.wiki!.publish(id, { revision: moved.page.revision });
   const old = await (await reader.request('/api/page?path=notes%2Fnew%20page.md')).json() as PageResponse;
   assert.equal(old.path, 'archive/renamed.md'); assert.equal(old.redirected, true);
-  assert.equal((await reader.request('/wiki/notes/new%20page.md')).headers.get('location'), '/wiki/archive/renamed.md');
+  assert.equal((await reader.request('/wiki/notes/new%20page.md')).headers.get('location'), '/wiki/archive/renamed');
   const history = await (await admin.request(`/api/admin/pages/${id}/history`)).json() as HistoryEntry[];
   assert.equal(history.length, 3);
   assert.equal(history[0]!.author, f.config.site.gitAuthor.name);
@@ -74,7 +79,7 @@ test('end-to-end persistence, history, explicit renames, aliases and local-only 
   assert.equal((await (await restarted.request(`/api/admin/pages/${id}/history`)).json() as HistoryEntry[]).length, 4);
 });
 
-test('public SSE updates after Save without exposing draft data', async t => {
+test('public SSE updates after Publish without exposing saved draft data', async t => {
   const f = await fixture(); t.after(f.cleanup);
   const admin = await f.start('admin');
   const reader = await f.start('public');
@@ -87,6 +92,9 @@ test('public SSE updates after Save without exposing draft data', async t => {
   const page = await (await reader.request('/api/page')).json() as PageResponse;
   const result = await admin.request(`/api/admin/pages/${page.id}`, 'PUT', { revision: page.revision, content: '# Changed live\n\n## New heading\nLive content.' });
   assert.equal(result.status, 200);
+  assert.equal((await (await reader.request('/api/page')).json() as PageResponse).title, 'Welcome');
+  const saved = await result.json() as MutationResult;
+  assert.equal((await admin.request(`/api/admin/pages/${page.id}/publish`, 'POST', { revision: saved.page.revision })).status, 200);
   const timeout = setTimeout(() => abort.abort(), 5000);
   let data = '';
   try {
@@ -127,7 +135,7 @@ test('external edits are preserved and rejected instead of silently overwritten'
   assert.equal(await fs.readFile(path.join(f.config.contentDir, 'home.md'), 'utf8'), '# External edit');
 });
 
-test('a committed transaction interrupted before publication is completed on restart', async t => {
+test('an interrupted Save is recovered in admin without publishing on restart', async t => {
   const f = await fixture(); t.after(f.cleanup);
   const admin = await f.start('admin');
   const publicApp = await f.start('public');
@@ -142,7 +150,8 @@ test('a committed transaction interrupted before publication is completed on res
   assert.equal((await (await publicApp.request('/api/page')).json() as PageResponse).title, 'Welcome');
   await admin.service.close();
   admin.server.closeAllConnections(); await new Promise<void>(resolve => admin.server.close(() => resolve()));
-  await f.start('admin');
-  assert.equal((await (await publicApp.request('/api/page')).json() as PageResponse).title, 'Recovered publication');
+  const restarted = await f.start('admin');
+  assert.equal((await (await restarted.request('/api/page')).json() as PageResponse).title, 'Recovered publication');
+  assert.equal((await (await publicApp.request('/api/page')).json() as PageResponse).title, 'Welcome');
   assert.equal(await fs.readFile(path.join(f.config.contentDir, 'home.md'), 'utf8'), '# Recovered publication');
 });

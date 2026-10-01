@@ -35,7 +35,7 @@ test('headings have unique anchors, Unicode support and a nested table of conten
 
 test('Markdown links, references, images and unsafe HTML are rendered safely', () => {
   const result = renderer.render('[Page](../world/a%20b.md#section)\n\n[Home][h]\n\n[h]: /home.md\n\n![Image](images/a.png)\n\n<script>alert(1)</script>\n\n[bad](javascript:alert(1))', 'guides/one.md');
-  assert.match(result.html, /href="\/codex\/wiki\/world\/a%20b.md#section"/);
+  assert.match(result.html, /href="\/codex\/wiki\/world\/a%20b#section"/);
   assert.match(result.html, /href="\/codex\/"/);
   assert.match(result.html, /src="\/codex\/media\/guides\/images\/a.png"/);
   assert.doesNotMatch(result.html, /<script>|href="javascript:/);
@@ -53,6 +53,7 @@ test('moving Markdown preserves link destinations and never rewrites code exampl
 test('file access rejects traversal and reserved paths', () => {
   for (const path of ['../secret.md', '/a.md', 'a/../secret.md', '.git/config.md', 'a\\b.md', 'NUL.md', 'a/.hidden.md', 'a.md ', 'a:bad.md']) assert.throws(() => validatePath(path));
   assert.equal(validatePath('World/Café notes.md'), 'World/Café notes.md');
-  assert.equal(pageUrl('World/Café notes.md', '/library'), '/library/wiki/World/Caf%C3%A9%20notes.md');
+  assert.equal(pageUrl('World/Café notes.md', '/library'), '/library/wiki/World/Caf%C3%A9%20notes');
+  assert.equal(fileFromLocation('/library/wiki/World/Caf%C3%A9%20notes', '/library'), 'World/Café notes.md');
   assert.equal(fileFromLocation('/library/wiki/World/Caf%C3%A9%20notes.md', '/library'), 'World/Café notes.md');
 });

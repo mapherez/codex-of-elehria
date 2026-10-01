@@ -41,3 +41,6 @@
 .codex .diff-sign { width: 1.4rem; flex-shrink: 0; user-select: none; }
 .codex .diff-view code { white-space: pre-wrap; overflow-wrap: anywhere; }
 @media (max-width: 720px) { .codex .workspace-heading { flex-direction: column; } .codex .history-list li { flex-wrap: wrap; } .codex .editor-state { display: none; } }
+.codex .publication-status { font-size: .8rem; color: var(--codex-muted); }
+.codex .publication-status.pending { color: var(--codex-accent); }
+.codex .publication-actions { display: inline-flex; align-items: center; gap: .6rem; margin-inline-start: auto; }

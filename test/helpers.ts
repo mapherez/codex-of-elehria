@@ -9,7 +9,7 @@ import { english } from '../packages/i18n';
 import site from '../config/site.json';
 
 const testRoot = path.resolve('.tools/test-runs');
-export async function fixture() {
+export async function fixture({ publishInitial = true } = {}) {
   await fs.mkdir(testRoot, { recursive: true });
   const root = await fs.mkdtemp(path.join(testRoot, 'wiki-'));
   const contentDir = path.join(root, 'dist');
@@ -24,6 +24,7 @@ export async function fixture() {
   };
   const services: Awaited<ReturnType<typeof createApplication>>[] = [];
   const servers: Server[] = [];
+  let firstAdmin = true;
   async function start(mode: 'public' | 'admin') {
     const reservation = createServer();
     await new Promise<void>(resolve => reservation.listen(0, '127.0.0.1', resolve));
@@ -32,6 +33,12 @@ export async function fixture() {
     const url = `http://127.0.0.1:${port}`;
     const service = await createApplication({ ...config, mode, port, adminOrigins: [url], webDir: path.resolve(`build/${mode}`) });
     services.push(service);
+    if (mode === 'admin' && firstAdmin) {
+      firstAdmin = false;
+      if (publishInitial) for (const page of service.wiki!.pages.filter(page => !page.deleted)) {
+        await service.wiki!.publish(page.id, { revision: page.revision });
+      }
+    }
     const server = service.app.listen(port, '127.0.0.1');
     servers.push(server);
     await new Promise<void>(resolve => server.once('listening', resolve));

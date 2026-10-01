@@ -462,3 +462,5 @@
   color: var(--codex-accent);
   vertical-align: middle;
 }
+.codex .note-warning { display: none; }
+.codex.show-link-warnings .note-warning { display: inline; margin-inline-start: .3em; color: var(--codex-accent); }

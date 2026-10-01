@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { diffLines } from 'diff';
-import { createPageSchema, savePageSchema, movePageSchema, deletePageSchema, repairImageSchema } from '../../../../packages/contracts';
+import { createPageSchema, savePageSchema, movePageSchema, deletePageSchema, repairImageSchema, publishPageSchema } from '../../../../packages/contracts';
 import type { WikiService } from '../services/wiki-service';
 import type { MarkdownRenderer } from '../domain/markdown';
 import type { ImageFiles } from '../infrastructure/image-files';
@@ -12,6 +12,7 @@ export function adminRoutes(service: WikiService, renderer: MarkdownRenderer, to
   router.get('/pages/:id', (req, res) => res.json(service.get(req.params.id)));
   router.post('/pages', async (req, res) => res.status(201).json(await service.create(createPageSchema.parse(req.body))));
   router.put('/pages/:id', async (req, res) => res.json(await service.save(req.params.id, savePageSchema.parse(req.body))));
+  router.post('/pages/:id/publish', async (req, res) => res.json(await service.publish(req.params.id, publishPageSchema.parse(req.body))));
   router.post('/pages/:id/images', async (req, res) => res.json(await service.repairImage(req.params.id, repairImageSchema.parse(req.body))));
   router.post('/pages/:id/move', async (req, res) => res.json(await service.move(req.params.id, movePageSchema.parse(req.body))));
   router.delete('/pages/:id', async (req, res) => res.json(await service.delete(req.params.id, deletePageSchema.parse(req.body))));
@@ -22,7 +23,8 @@ export function adminRoutes(service: WikiService, renderer: MarkdownRenderer, to
   router.get('/pages/:id/versions/:commit', async (req, res) => {
     service.get(req.params.id);
     const version = await service.repository.version(req.params.id, req.params.commit);
-    res.json({ ...version, ...renderer.render(version.content, version.path, await images.index()) });
+    const notes = renderer.noteIndex([...service.pages.filter(page => page.id !== req.params.id), { ...version, deleted: false }]);
+    res.json({ ...version, ...renderer.render(version.content, version.path, await images.index(), notes) });
   });
   router.get('/pages/:id/diff', async (req, res) => {
     service.get(req.params.id);

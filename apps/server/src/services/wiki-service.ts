@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import lockfile from 'proper-lockfile';
-import type { CreatePageInput, DeletePageInput, MovePageInput, MutationResult, PageRecord, RepairImageInput, SavePageInput } from '../../../../packages/contracts';
+import type { CreatePageInput, DeletePageInput, MovePageInput, MutationResult, PageRecord, PublishPageInput, RepairImageInput, SavePageInput } from '../../../../packages/contracts';
 import type { Translator } from '../../../../packages/i18n';
 import { DomainError } from '../domain/errors';
 import { relocateLinks } from '../domain/markdown';
@@ -12,6 +12,7 @@ import { atomicWrite, exists, readJson, safeFile, serialize } from '../infrastru
 import { Publisher } from './publication';
 import { ImageFiles } from '../infrastructure/image-files';
 import { wikiImages } from '../domain/wiki-images';
+import { PublishedVersions } from './published-versions';
 
 interface Journal { beforeHead: string | null; before: PageRecord[]; after: PageRecord[]; message: string }
 
@@ -25,6 +26,7 @@ export class WikiService {
     readonly repository: GitRepository,
     private readonly files: ContentFiles,
     private readonly publisher: Publisher,
+    private readonly published: PublishedVersions,
     private readonly t: Translator
   ) { this.journal = path.join(stateDir, 'transaction.json'); }
 
@@ -37,13 +39,14 @@ export class WikiService {
     });
     try {
       await this.repository.initialize();
+      await this.published.initialize();
       await this.recover();
       const head = await this.repository.head();
       if (!head) await this.transaction([], await this.files.import(), this.t('git.import'));
       else {
         this.pages = await this.repository.readPages();
         await this.files.verify(this.pages);
-        await this.publisher.publish(this.pages, head);
+        await this.refreshPreview(head);
       }
     } catch (error) { await this.close(); throw error; }
   }
@@ -51,6 +54,15 @@ export class WikiService {
     const page = this.pages.find(item => item.id === id);
     if (!page) throw new DomainError('error.notFound', 404);
     return page;
+  }
+  private async refreshPreview(head: string): Promise<void> {
+    await this.publisher.publish(this.pages, head, page => this.published.status(page));
+  }
+  private async finish(before: PageRecord[], after: PageRecord[]): Promise<void> {
+    await this.files.mirror(before, after);
+    this.pages = after;
+    for (const page of after) if (page.deleted) await this.published.remove(page.id);
+    await this.refreshPreview((await this.repository.head())!);
   }
   private async recover(): Promise<void> {
     if (!await exists(this.journal)) return;
@@ -66,8 +78,7 @@ export class WikiService {
       return;
     }
     this.pages = await this.repository.readPages();
-    await this.files.mirror(journal.before, this.pages);
-    await this.publisher.publish(this.pages, (await this.repository.head())!);
+    await this.finish(journal.before, this.pages);
     await fs.rm(this.journal);
   }
   private async transaction(before: PageRecord[], after: PageRecord[], message: string): Promise<void> {
@@ -76,9 +87,7 @@ export class WikiService {
     try {
       await this.repository.writePages(after);
       await this.repository.commit(message);
-      await this.files.mirror(before, after);
-      await this.publisher.publish(after, (await this.repository.head())!);
-      this.pages = after;
+      await this.finish(before, after);
       await fs.rm(this.journal);
     } catch {
       const committed = (await this.repository.head()) !== journal.beforeHead;
@@ -88,7 +97,7 @@ export class WikiService {
     }
   }
   private serializeMutation(action: () => Promise<MutationResult>): Promise<MutationResult> {
-    const task = this.queue.then(async () => { await this.recover(); await this.files.verify(this.pages); return action(); });
+    const task = this.queue.then(async () => { await this.recover(); await this.published.flush(); await this.files.verify(this.pages); return action(); });
     this.queue = task.catch(() => {});
     return task;
   }
@@ -122,6 +131,14 @@ export class WikiService {
       if (page.content === input.content) return { page, unchanged: true };
       page.content = input.content;
       return this.persist(page, this.t('git.save', { path: page.path }), input.message);
+    });
+  }
+  publish(id: string, input: PublishPageInput): Promise<MutationResult> {
+    return this.serializeMutation(async () => {
+      const page = this.editable(id, input.revision);
+      const changed = await this.published.publish(page, (await this.repository.head())!);
+      await this.refreshPreview((await this.repository.head())!);
+      return { page, ...(!changed ? { unchanged: true } : {}) };
     });
   }
   repairImage(id: string, input: RepairImageInput): Promise<MutationResult> {

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { randomBytes } from 'node:crypto';
 import type { RuntimeConfig } from '../config';
 import { createTranslator } from '../../../../packages/i18n';
-import { pageUrl } from '../../../../packages/contracts/routes';
+import { fileFromLocation, pageUrl } from '../../../../packages/contracts/routes';
 import { DomainError } from '../domain/errors';
 import { safeFile } from '../infrastructure/filesystem';
 import { GitRepository } from '../infrastructure/git-repository';
@@ -13,6 +13,7 @@ import { ImageFiles } from '../infrastructure/image-files';
 import { MarkdownRenderer } from '../domain/markdown';
 import { Publisher, PublicationReader } from '../services/publication';
 import { WikiService } from '../services/wiki-service';
+import { PublishedVersions } from '../services/published-versions';
 import { adminRoutes } from './admin-routes';
 import { securityHeaders, localAccess, errorHandler } from './security';
 
@@ -24,13 +25,15 @@ export async function createApplication(config: RuntimeConfig) {
   const renderer = new MarkdownRenderer(t, config.site.basePath);
   let wiki: WikiService | undefined;
   if (config.mode === 'admin') {
+    const repository = new GitRepository(config.stateDir, config.site.gitAuthor);
+    const published = new PublishedVersions(config.stateDir, config.contentDir, repository, new Publisher(config.contentDir, renderer, config.site.locale));
     wiki = new WikiService(config.stateDir,
-      new GitRepository(config.stateDir, config.site.gitAuthor),
+      repository,
       new ContentFiles(config.contentDir, config.site.maxPageBytes),
-      new Publisher(config.contentDir, renderer, config.site.locale), t);
+      new Publisher(config.contentDir, renderer, config.site.locale, config.stateDir), published, t);
     await wiki.initialize();
   }
-  const reader = new PublicationReader(config.contentDir, t);
+  const reader = new PublicationReader(config.mode === 'admin' ? config.stateDir : config.contentDir, t);
   await reader.start(config.site.publicationPollMs);
   const token = randomBytes(32).toString('hex');
   const app = express();
@@ -86,12 +89,18 @@ export async function createApplication(config: RuntimeConfig) {
   });
   routes.use('/assets', express.static(path.join(config.webDir, 'assets'), { dotfiles: 'deny', fallthrough: false, immutable: true, maxAge: '1y' }));
   routes.get(['/', /^\/wiki\/.+/], async (req, res) => {
+    await reader.refresh();
     if (req.path !== '/' && reader.current) {
-      let requested: string;
-      try { requested = decodeURIComponent(req.path.slice(6)); } catch { throw new DomainError('error.invalidPath'); }
-      if (!reader.current.pages.some(page => page.path === requested)) {
-        const alias = reader.current.pages.find(page => page.aliases.includes(requested));
-        if (alias) return res.redirect(302, pageUrl(alias.path, config.site.basePath));
+      const requested = fileFromLocation(req.path);
+      if (!requested) throw new DomainError('error.invalidPath');
+      const page = reader.current.pages.find(page => page.path === requested)
+        || reader.current.pages.find(page => page.aliases.includes(requested));
+      if (page) {
+        const canonical = pageUrl(page.path, config.site.basePath);
+        if (config.site.basePath + req.path !== canonical) {
+          const query = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+          return res.redirect(302, canonical + query);
+        }
       }
     }
     const html = await fs.readFile(path.join(config.webDir, 'index.html'), 'utf8');

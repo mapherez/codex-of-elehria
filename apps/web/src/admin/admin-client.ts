@@ -1,4 +1,4 @@
-import type { CreatePageInput, DeletePageInput, DiffResponse, HistoryEntry, MovePageInput, MutationResult, PageRecord, RepairImageInput, SavePageInput, VersionResponse } from '../../../../packages/contracts';
+import type { CreatePageInput, DeletePageInput, DiffResponse, HistoryEntry, MovePageInput, MutationResult, PageRecord, PublishPageInput, RepairImageInput, SavePageInput, VersionResponse } from '../../../../packages/contracts';
 import { WikiClient } from '../lib/api';
 
 export class AdminClient extends WikiClient {
@@ -15,6 +15,7 @@ export class AdminClient extends WikiClient {
   pages(): Promise<Omit<PageRecord, 'content'>[]> { return this.request('/admin/pages'); }
   create(input: CreatePageInput): Promise<MutationResult> { return this.mutate('/admin/pages', 'POST', input); }
   save(id: string, input: SavePageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id, 'PUT', input); }
+  publish(id: string, input: PublishPageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id + '/publish', 'POST', input); }
   repairImage(id: string, input: RepairImageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id + '/images', 'POST', input); }
   move(id: string, input: MovePageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id + '/move', 'POST', input); }
   delete(id: string, input: DeletePageInput): Promise<MutationResult> { return this.mutate('/admin/pages/' + id, 'DELETE', input); }

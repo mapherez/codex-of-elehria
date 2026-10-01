@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import MarkdownIt from 'markdown-it';
+import type Token from 'markdown-it/lib/token.mjs';
 import { fromMarkdown } from 'mdast-util-from-markdown';
 import { toMarkdown } from 'mdast-util-to-markdown';
 import { gfm } from 'micromark-extension-gfm';
@@ -11,6 +12,22 @@ import { pageUrl } from '../../../../packages/contracts/routes';
 import type { Translator } from '../../../../packages/i18n';
 import { validatePath } from '../infrastructure/filesystem';
 import { ImageIndex, replaceWikiImages, wikiImages } from './wiki-images';
+import { installWikiLinks, NoteIndex, type WikiLink } from './wiki-links';
+
+function assignHeadings(tokens: Token[]): Heading[] {
+  const headings: Heading[] = [];
+  const used = new Set<string>();
+  tokens.forEach((token, index) => {
+    if (token.type !== 'heading_open') return;
+    const text = (tokens[index + 1]?.children || []).filter(child => ['text', 'code_inline', 'image', 'wiki_link'].includes(child.type)).map(child => child.content).join('');
+    const base = text.toLowerCase().normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s+/g, '-') || `h-${index}`;
+    let id = base;
+    for (let suffix = 1; used.has(id); suffix++) id = `${base}-${suffix}`;
+    used.add(id); token.attrSet('id', id);
+    headings.push({ id, text, level: Number(token.tag.slice(1)) });
+  });
+  return headings;
+}
 
 export function resolveLocalLink(url: string, source: string): { path: string; suffix: string } | null {
   if (!url || /^[a-z][a-z\d+.-]*:/i.test(url) || url.startsWith('//') || url.startsWith('#')) return null;
@@ -27,32 +44,35 @@ export function resolveLocalLink(url: string, source: string): { path: string; s
 
 export class MarkdownRenderer {
   private readonly parser = new MarkdownIt({ html: false, linkify: false });
-  constructor(private readonly t: Translator, private readonly basePath: string) {}
+  constructor(private readonly t: Translator, private readonly basePath: string) { installWikiLinks(this.parser); }
 
-  render(content: string, source: string, images = new ImageIndex()): RenderedMarkdown {
+  outline(content: string): Heading[] { return assignHeadings(this.prepare(content).tokens); }
+
+  noteIndex(pages: { path: string; aliases: string[]; content: string; deleted: boolean }[]): NoteIndex {
+    return new NoteIndex(pages.filter(page => !page.deleted).map(page => ({ ...page, headings: this.outline(page.content) })));
+  }
+
+  private prepare(content: string) {
     const embeds = wikiImages(content);
     const marker = 'codex-image:' + randomUUID() + ':';
     const prepared = replaceWikiImages(content, embeds, (embed, index) =>
       `![${embed.reference.replace(/[\\\[\]]/g, '\\$&')}](${marker}${index})`);
-    const tokens = this.parser.parse(prepared, {});
-    const headings: Heading[] = [];
-    const used = new Set<string>();
-    let title = path.posix.basename(source).replace(/\.md$/i, '');
-    let hasTitle = false;
+    return { embeds, marker, tokens: this.parser.parse(prepared, {}) };
+  }
+
+  render(content: string, source: string, images = new ImageIndex(), notes?: NoteIndex): RenderedMarkdown {
+    const { embeds, marker, tokens } = this.prepare(content);
+    const outline = assignHeadings(tokens);
+    const headings = outline.filter(heading => heading.level >= 2);
+    const firstTitle = outline.find(heading => heading.level === 1);
+    const title = firstTitle?.text ?? path.posix.basename(source).replace(/\.md$/i, '');
+    const hasTitle = Boolean(firstTitle);
+    const noteIndex = notes || new NoteIndex([{ path: source, aliases: [], headings: outline }]);
     for (let index = 0; index < tokens.length; index++) {
       const token = tokens[index]!;
-      if (token.type === 'heading_open') {
-        const text = (tokens[index + 1]?.children || []).filter(child => ['text', 'code_inline', 'image'].includes(child.type)).map(child => child.content).join('');
-        const base = text.toLowerCase().normalize('NFKD').replace(/\p{M}/gu, '').replace(/[^\p{L}\p{N}\s-]/gu, '').trim().replace(/\s+/g, '-') || `h-${index}`;
-        let id = base;
-        for (let suffix = 1; used.has(id); suffix++) id = `${base}-${suffix}`;
-        used.add(id);
-        token.attrSet('id', id);
-        const level = Number(token.tag.slice(1));
-        if (level === 1 && !hasTitle) { title = text; hasTitle = true; }
-        if (level >= 2) headings.push({ id, text, level });
-      }
+      let inertLink = false;
       for (const child of token.children || []) {
+        if (child.type === 'link_close' && inertLink) { child.tag = 'span'; inertLink = false; }
         if (child.type === 'image' && child.attrGet('src')?.startsWith(marker)) {
           const index = Number(child.attrGet('src')!.slice(marker.length));
           const embed = embeds[index]!;
@@ -76,6 +96,10 @@ export class MarkdownRenderer {
         const target = resolveLocalLink(original, source);
         if (target) {
           if (/\.md$/i.test(target.path) && child.type === 'link_open') {
+            if (notes && !notes.hasPath(target.path)) {
+              child.tag = 'span'; child.attrs = null; inertLink = true;
+              continue;
+            }
             child.attrSet('href', pageUrl(target.path, this.basePath) + target.suffix);
             child.attrSet('data-page-path', target.path);
             child.attrSet('data-page-suffix', target.suffix);
@@ -88,6 +112,16 @@ export class MarkdownRenderer {
       }
     }
     const escape = this.parser.utils.escapeHtml;
+    this.parser.renderer.rules.wiki_link = (items, index) => {
+      const link = items[index]!.meta as WikiLink;
+      const resolved = noteIndex.resolve(link, source);
+      if ('reason' in resolved) {
+        const name = link.target + (link.heading === undefined ? '' : '#' + link.heading);
+        const label = this.t(`link.${resolved.reason}`, { name });
+        return `${escape(link.label)}<span class="note-warning" data-note-warning role="img" aria-label="${escape(label)}" title="${escape(label)}">&#9888;</span>`;
+      }
+      return `<a href="${escape(pageUrl(resolved.path, this.basePath) + resolved.suffix)}" data-page-path="${escape(resolved.path)}" data-page-suffix="${escape(resolved.suffix)}">${escape(link.label)}</a>`;
+    };
     this.parser.renderer.rules.wiki_image_missing = (items, index) => {
       const { index: occurrence, reference, reason } = items[index]!.meta as { index: number; reference: string; reason: 'missing' | 'ambiguous' };
       const label = this.t(reason === 'ambiguous' ? 'image.ambiguous' : 'image.missing', { name: reference });
@@ -108,7 +142,9 @@ export class MarkdownRenderer {
 export function relocateLinks(content: string, oldPath: string, newPath: string): string {
   const embeds = wikiImages(content);
   const marker = 'CODEXIMAGE' + randomUUID().replaceAll('-', '');
-  const protectedContent = replaceWikiImages(content, embeds, (_embed, index) => marker + index + 'END');
+  const links: string[] = [];
+  const protectedContent = replaceWikiImages(content, embeds, (_embed, index) => marker + index + 'END')
+    .replace(/\\*!?\[\[[^\]\r\n]+\]\]/g, link => { links.push(link); return marker + 'LINK' + (links.length - 1) + 'END'; });
   const tree = fromMarkdown(protectedContent, { extensions: [gfm()], mdastExtensions: [gfmFromMarkdown()] });
   let changed = false;
   function visit(node: Nodes): void {
@@ -127,5 +163,6 @@ export function relocateLinks(content: string, oldPath: string, newPath: string)
   if (!changed) return content;
   let result = toMarkdown(tree, { extensions: [gfmToMarkdown()] });
   embeds.forEach((embed, index) => { result = result.replaceAll(marker + index + 'END', content.slice(embed.start, embed.end)); });
+  links.forEach((link, index) => { result = result.replaceAll(marker + 'LINK' + index + 'END', link); });
   return result;
 }

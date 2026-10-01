@@ -9,11 +9,12 @@
   import Article from './Article.svelte';
   import './reader.css';
 
-  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, toolbar, body, hash = '', refreshKey = 0 }: {
+  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, showLinkWarnings = false, toolbar, body, hash = '', refreshKey = 0 }: {
     apiBase: string; basePath?: string; path?: string; hash?: string; refreshKey?: number; t: Translator;
     onNavigate: (path: string, hash?: string, replace?: boolean) => void;
     onPage?: (page: PageResponse | null) => void; onPublication?: () => void;
     onImagePick?: (page: PageResponse, occurrence: number) => Promise<void>;
+    showLinkWarnings?: boolean;
     toolbar?: Snippet<[PageResponse | null]>; body?: Snippet;
   } = $props();
   const model = new ReaderModel(() => apiBase, () => onPublication?.());
@@ -73,7 +74,7 @@
 </script>
 
 <svelte:window onscroll={updateActive} onresize={updateActive} />
-<div class="codex" class:workspace={Boolean(body)}>
+<div class="codex" class:workspace={Boolean(body)} class:show-link-warnings={showLinkWarnings}>
   <button class="mobile-nav-button" onclick={() => mobileOpen = !mobileOpen} aria-expanded={mobileOpen} aria-controls={uid + '-nav'}>
     <span aria-hidden="true">☰</span> {t(mobileOpen ? 'nav.close' : 'nav.open')}
   </button>

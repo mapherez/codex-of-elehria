@@ -67,6 +67,8 @@ test('repair updates only the selected embed, commits history and publishes to r
   const repaired = await response.json() as MutationResult;
   assert.equal(repaired.page.content, source.replace('![[portrait.png|320]]', '![[nested/portrait.png|320]]'));
   assert.equal(await fs.readFile(path.join(f.config.contentDir, 'home.md'), 'utf8'), repaired.page.content);
+  assert.match((await (await reader.request('/api/page')).json() as PageResponse).html, /data-image-index="1"/);
+  await admin.service.wiki!.publish(page.id, { revision: repaired.page.revision });
   const published = await (await reader.request('/api/page')).json() as PageResponse;
   assert.match(published.html, /data-image-index="0"/);
   assert.doesNotMatch(published.html, /data-image-index="1"/);
@@ -92,7 +94,7 @@ test('native picker fallback matches file content and refuses indistinguishable 
   assert.equal(await images.selected({ path: 'nested/same.png', name: 'same.png', sha256: digest('same bytes') }), 'nested/same.png');
 });
 
-test('restarting admin resolves newly added assets without changing Markdown history', async t => {
+test('restarting admin resolves new assets in preview while preserving the public snapshot', async t => {
   const f = await fixture(); t.after(f.cleanup);
   await fs.writeFile(path.join(f.config.contentDir, 'home.md'), '# Images\n\n![[later.png]]');
   const admin = await f.start('admin');
@@ -102,10 +104,13 @@ test('restarting admin resolves newly added assets without changing Markdown his
   await admin.service.close();
   await fs.mkdir(path.join(f.config.contentDir, '_images'));
   await fs.writeFile(path.join(f.config.contentDir, '_images', 'later.png'), 'later image');
-  await f.start('admin');
-  const after = await (await reader.request('/api/page')).json() as PageResponse;
+  const restarted = await f.start('admin');
+  const after = await (await restarted.request('/api/page')).json() as PageResponse;
+  assert.equal((await (await reader.request('/api/page')).json() as PageResponse).html, before.html);
   assert.equal(after.revision, before.revision);
   assert.notEqual(after.publication, before.publication);
   assert.doesNotMatch(after.html, /data-image-index/);
   assert.match(after.html, /src="\/media\/_images\/later.png"/);
+  await restarted.service.wiki!.publish(after.id, { revision: after.revision });
+  assert.doesNotMatch((await (await reader.request('/api/page')).json() as PageResponse).html, /data-image-index/);
 });

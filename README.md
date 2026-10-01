@@ -18,7 +18,7 @@ docker compose -f compose-admin.yml up -d --build
 docker compose -f compose.yml up -d --build
 ```
 
-The first workspace startup imports the existing Markdown and creates the initial Git version. Open:
+The first workspace startup imports the existing Markdown as drafts and creates the initial Git version. Publish pages individually from the workspace, including `home.md` to make the public home page available. Existing installations retain their current public pages during migration. Open:
 
 - Reader: `http://localhost:3000`
 - Workspace: `http://localhost:3001`
@@ -82,19 +82,33 @@ Only root `home.md` is hidden from navigation. Every other `.md` file participat
 
 The right-hand index is generated from H2–H6 headings with unique anchors. Links between Markdown files, references, relative image paths and heading anchors are supported. Raw HTML is escaped. Local images must be PNG, JPEG, GIF, WebP, AVIF or SVG, and are served with restrictive content headers. Uploading images through the workspace is not included.
 
-Save publishes immediately after committing. Text in the editor is private until saved. Renaming/moving preserves page identity and old-address aliases. A current page path takes precedence over an alias. Moving rewrites relative link destinations in that document using a Markdown parser; this may normalize its Markdown formatting. Historical links refer to the current wiki, not a complete historical site snapshot.
+Save commits a working version to Git and shows it rendered in the admin. Publish releases that saved version of the current page and updates public browsers. The page status is Draft, Published or Unpublished changes. Unsaved editor text cannot be published. Publishing checks the revision you reviewed and rejects a stale request if another window has saved changes.
+
+Admin navigation includes all active notes; public navigation and link resolution include only published versions. Publishing one page never publishes pending edits in another. Links to unpublished notes remain text in the public reader. Existing public pages keep their last published content until Publish is clicked again. Publish can also refresh resolved images without changing the Markdown; repeating an identical publication is a no-op.
+
+Renaming/moving preserves page identity and old-address aliases, but the public path changes only on Publish. A current page path takes precedence over an alias. Moving rewrites relative link destinations in that document using a Markdown parser; this may normalize its Markdown formatting. Delete page is an explicit removal: after confirmation, it removes the working and published page while preserving history. Historical links refer to the current admin workspace, not a complete historical site snapshot.
 
 History is available only in the local workspace, including for deleted pages. View original Markdown or rendered versions and compare any two revisions. Restoring from the UI is not included.
 
 ### Obsidian images
 
-Place image assets in `dist/_images/` or its subfolders. `![[photo.png]]` searches that entire tree by filename; exactly one match renders automatically. A reference with a path, such as `![[places/photo.png]]`, is relative to `_images` and resolves only that exact file. Use `![[./photo.png]]` to explicitly select a root-level image when another subfolder contains the same name. Matching is case-sensitive. Optional dimensions such as `![[photo.png|400]]` and `![[photo.png|400x300]]` are supported. Examples inside code blocks, inline code and escaped embeds remain literal. Note links and note embeds using Obsidian syntax are not included yet.
+Place image assets in `dist/_images/` or its subfolders. `![[photo.png]]` searches that entire tree by filename; exactly one match renders automatically. A reference with a path, such as `![[places/photo.png]]`, is relative to `_images` and resolves only that exact file. Use `![[./photo.png]]` to explicitly select a root-level image when another subfolder contains the same name. Matching is case-sensitive. Optional dimensions such as `![[photo.png|400]]` and `![[photo.png|400x300]]` are supported. Examples inside code blocks, inline code and escaped embeds remain literal. Note embeds are not included.
 
 Missing or ambiguous images show a small warning icon. In the admin, click it to choose the correct existing image with the system file picker. In browsers supporting directory selection, the first click asks you to select the host `_images` folder; click the icon again to choose an image. That folder is remembered for the current app session. The selected relative path and file contents are validated against the server's `_images` folder. Selecting another directory or a file outside it cannot publish a reference.
 
 Other browsers use the standard native file picker and match the chosen file by name and SHA-256. If identical files exist at multiple paths, that fallback cannot determine the selected path: use a browser with directory selection support or edit the explicit Markdown path. No file is uploaded. Canceling a picker leaves the note unchanged.
 
-Choosing a valid image updates only the clicked embed, retains its dimensions, commits the correction and updates public browsers. Concurrent note changes are rejected rather than overwritten. Public readers and historical versions have no repair controls. The image index is rebuilt when the admin publishes or starts; assets added later are picked up on the next publication or admin restart. This does not change the restrictions on external Markdown edits or re-import notes.
+Choosing a valid image updates only the clicked embed, retains its dimensions and commits the correction as a working version. Publish the page to release the correction. Concurrent note changes are rejected rather than overwritten. Public readers and historical versions have no repair controls. The image index is rebuilt for admin previews and explicit publications; restarting the admin updates its preview but preserves the public snapshot. This does not change the restrictions on external Markdown edits or re-import notes. Image files themselves remain shared host assets: Publish versions Markdown references, not image bytes, and does not make the media directory private.
+
+### Obsidian note links and page URLs
+
+Use `[[Humans]]` to find `Humans.md` anywhere in the collection, or `[[Humans|Humanity]]` to change the displayed text. Paths such as `[[races/Humans]]` are relative to the document root and distinguish duplicate filenames. `[[./Humans]]` selects a root-level note. The `.md` extension is optional in wikilinks; filenames are matched case-sensitively. Existing page aliases continue resolving after a rename.
+
+`[[Humans#Culture]]`, `[[Humans#Culture|Human culture]]` and `[[#Culture]]` link to headings in another note or the current note. Heading text maps to the actual generated anchor, including accents and punctuation. Repeated heading names select the first occurrence; an exact anchor such as `#culture-1` can select a later occurrence. Code examples and escaped links remain literal. Plugins, note embeds and block references are not supported.
+
+Missing or ambiguous destinations, including missing headings, remain plain text. Admin mode adds a small warning icon with a localized explanation; public mode hides that warning. The index is rebuilt for every publication, so creating or changing the target through the admin resolves existing references automatically without editing the referring note.
+
+Browser URLs omit `.md`: `races/Humans.md` is served at `/wiki/races/Humans`, while `home.md` remains `/`. Normal Markdown links such as `[Humanity](races/Humans.md)` also generate these URLs. Direct navigation and refresh work; legacy URLs with `.md` and moved-page aliases redirect to the current clean URL. Configured URL prefixes are preserved. Internal file paths and API paths still include `.md`.
 
 ## Development and checks
 
@@ -145,6 +159,8 @@ A packaged Web Component adapter is a possible follow-up; this version exposes t
 
 Back up `dist/`, `state/` and site/locale configuration together while the workspace is stopped. Git lives in `state/repository`: each page has a stable UUID Markdown file and a metadata file recording its current path, aliases and deletion state. This keeps history exact across moves without guessing renames. The editable directory remains in the familiar folder layout.
 
-Writes are serialized and protected by a process lock. A transaction journal enables rollback before a commit or completion after a commit. The public service reads only the atomically replaced `dist/.wiki/publication.json`, keeping the previous snapshot if a new one cannot be read. A crash before publication cannot expose a partially updated document tree. After an unclean shutdown, the lock may take around ten seconds to expire before startup can recover.
+Writes are serialized and protected by a process lock. A transaction journal enables rollback before a commit or completion after a commit. `state/published.json` records the Git commit and page revision selected for each public page, together with the exact snapshot to deliver. It does not require branches, merges or Markdown frontmatter. The admin reads its separate preview at `state/.wiki/publication.json`; the public service reads only the atomically replaced `dist/.wiki/publication.json`.
+
+On upgrade, the admin derives publication references from the existing public snapshot and Git history, preserving the exact visible snapshot. On subsequent restarts it restores that recorded snapshot, never the latest drafts. If Publish is interrupted after recording its intent, retrying or restarting completes delivery of that exact version. A missing public snapshot can be rebuilt from the private publication state. Keep `state/published.json` with the rest of your backups. After an unclean shutdown, the lock may take around ten seconds to expire before startup can recover.
 
 External document edits are deliberately not imported after initialization. The workspace detects differences before writing and at startup, preserves the files and refuses to overwrite them. Restore a consistent backup to resume. To start a new collection from externally edited files, use a new empty state directory and keep the previous state as a backup; that creates a new history.

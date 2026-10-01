@@ -23,7 +23,8 @@ export interface Publication {
   navigation: NavigationNode[]; pages: PublishedPage[];
 }
 export interface NavigationResponse { revision: string; navigation: NavigationNode[]; count: number }
-export interface PageResponse extends PublishedPage { publication: string; redirected: boolean }
+export type PublicationStatus = 'draft' | 'published' | 'changes';
+export interface PageResponse extends PublishedPage { publication: string; redirected: boolean; publicationStatus?: PublicationStatus }
 export interface ApiError { error: { code: ErrorCode; params?: Values; current?: PageRecord; committed?: boolean } }
 export interface HistoryEntry { commit: string; date: string; author: string; message: string }
 export interface VersionResponse extends PageRecord, RenderedMarkdown {}
@@ -41,6 +42,8 @@ export const createPageSchema = z.object({ path: z.string(), content: z.string()
 export const savePageSchema = z.object({ content: z.string(), revision: z.string(), message: summary });
 export const movePageSchema = z.object({ path: z.string(), revision: z.string(), message: summary });
 export const deletePageSchema = z.object({ revision: z.string(), message: summary });
+export const publishPageSchema = z.object({ revision: z.string() });
+export type PublishPageInput = z.infer<typeof publishPageSchema>;
 export const repairImageSchema = z.object({
   revision: z.string(), occurrence: z.number().int().nonnegative(),
   path: z.string().optional(), name: z.string().min(1), sha256: z.string().regex(/^[a-f0-9]{64}$/)
