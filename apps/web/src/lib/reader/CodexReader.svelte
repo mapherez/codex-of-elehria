@@ -6,6 +6,7 @@
   import { ReaderModel } from './reader-model.svelte';
   import NavigationTree from './NavigationTree.svelte';
   import TableOfContents from './TableOfContents.svelte';
+  import { scrollToSearchOccurrence } from '../search/search-occurrence';
   import Article from './Article.svelte';
   import Drawer from '../Drawer.svelte';
   import Icon from '../Icon.svelte';
@@ -55,6 +56,7 @@
     });
   });
   function jump(id: string, update = true) {
+    if (article && scrollToSearchOccurrence(article, id)) { main?.focus({ preventScroll: true }); return; }
     const heading = article?.querySelector<HTMLElement>('#' + CSS.escape(id));
     heading?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
     activeHeading = id;

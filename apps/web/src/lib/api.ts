@@ -1,4 +1,4 @@
-import type { ApiError, NavigationResponse, PageResponse, PublicConfig } from '../../../../packages/contracts';
+import type { SearchResponse, ApiError, NavigationResponse, PageResponse, PublicConfig } from '../../../../packages/contracts';
 import type { ErrorCode } from '../../../../packages/i18n';
 
 export class ApiClientError extends Error {
@@ -23,6 +23,9 @@ export class WikiClient {
       throw new ApiClientError(payload.error, response.status);
     }
     return response.json() as Promise<T>;
+  }
+  search(query: string, offset = 0, limit = 10, signal?: AbortSignal): Promise<SearchResponse> {
+    return this.request('/search?' + new URLSearchParams({ q: query, offset: String(offset), limit: String(limit) }), { signal });
   }
   config(): Promise<PublicConfig> { return this.request('/config'); }
   navigation(signal?: AbortSignal): Promise<NavigationResponse> { return this.request('/navigation', { signal }); }

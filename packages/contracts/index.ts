@@ -29,6 +29,14 @@ export interface Publication {
   navigation: NavigationNode[]; pages: PublishedPage[];
   importedMedia?: string[];
 }
+export interface SearchSegment { text: string; match: boolean }
+export interface SearchResult { id: string; path: string; revision: string; name: string; snippet: SearchSegment[]; fragment: string }
+export interface SearchResponse { query: string; revision: string; total: number; offset: number; limit: number; results: SearchResult[] }
+export const searchQuerySchema = z.object({
+  q: z.string().max(300).default(''),
+  offset: z.coerce.number().int().min(0).max(10000000).default(0),
+  limit: z.coerce.number().int().min(1).max(100).default(10)
+});
 export interface NavigationResponse { revision: string; navigation: NavigationNode[]; count: number }
 export type PublicationStatus = 'draft' | 'published' | 'changes';
 export interface PageResponse extends PublishedPage { publication: string; redirected: boolean; publicationStatus?: PublicationStatus }

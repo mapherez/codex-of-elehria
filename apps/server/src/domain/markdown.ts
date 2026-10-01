@@ -142,9 +142,9 @@ export class MarkdownRenderer {
       if ('reason' in resolved) {
         const name = link.target + (link.heading === undefined ? '' : '#' + link.heading);
         const label = this.t(`link.${resolved.reason}`, { name });
-        return `${escape(link.label)}<span class="note-warning" data-note-warning role="img" aria-label="${escape(label)}" title="${escape(label)}">&#9888;</span>`;
+        return `${escape(link.label)}<span class="note-warning" data-note-warning data-search-target="${escape(link.target + (link.heading === undefined ? '' : '#' + link.heading))}" data-search-label="${escape(link.label)}" role="img" aria-label="${escape(label)}" title="${escape(label)}">&#9888;</span>`;
       }
-      return `<a href="${escape(pageUrl(resolved.path, this.basePath) + resolved.suffix)}" data-page-path="${escape(resolved.path)}" data-page-suffix="${escape(resolved.suffix)}">${escape(link.label)}</a>`;
+      return `<a href="${escape(pageUrl(resolved.path, this.basePath) + resolved.suffix)}" data-page-path="${escape(resolved.path)}" data-page-suffix="${escape(resolved.suffix)}" data-search-target="${escape(link.target + (link.heading === undefined ? '' : '#' + link.heading))}">${escape(link.label)}</a>`;
     };
     this.parser.renderer.rules.wiki_image_missing = (items, index) => {
       const { index: occurrence, reference, reason } = items[index]!.meta as { index: number; reference: string; reason: 'missing' | 'ambiguous' };

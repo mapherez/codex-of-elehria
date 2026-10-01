@@ -203,5 +203,19 @@
   "git.delete": "Delete {{path}}",
   "log.listening": "{{mode}} listening on {{url}}",
   "log.recovery": "Transaction recovery is pending: {{reason}}",
-  "log.startFailed": "The application could not start: {{reason}}"
+  "log.startFailed": "The application could not start: {{reason}}",
+  "search.open": "Search",
+  "search.close": "Close search",
+  "search.label": "Notes",
+  "search.query": "Search notes",
+  "search.placeholder": "Search the notes…",
+  "search.results": "Search results",
+  "search.title": "Search results",
+  "search.submit": "Search",
+  "search.loading": "Searching…",
+  "search.showAll": "Show all",
+  "search.count": "{{count}} results",
+  "search.countQuery": "{{count}} results for “{{query}}”",
+  "search.empty": "No results for “{{query}}”.",
+  "search.more": "Load more results"
 }

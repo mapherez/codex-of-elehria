@@ -11,6 +11,7 @@
   import HistoryView from './HistoryView.svelte';
   import DeletedPages from './DeletedPages.svelte';
   import ActionIcon from './ActionIcon.svelte';
+  import SearchPage from '../lib/search/SearchPage.svelte';
   import NoxSyncPanel from './NoxSyncPanel.svelte';
   import PublishPending from './PublishPending.svelte';
   import { AdminClient } from './admin-client';
@@ -43,6 +44,8 @@
   let error = $state<ApiError['error'] | null>(null);
   let notice = $state('');
   let refreshKey = $state(0);
+  let searchRefreshKey = $state(0);
+  $effect(() => { if (route.search !== null) document.title = t('search.title') + ' · ' + config.brand.name; });
   let pickingImage = false;
   function runAction(next: () => void) {
     if (matchMedia('(min-width: 1025px)').matches) next();
@@ -63,9 +66,14 @@
   function canLeave() { return !dirty || confirm(t('editor.discard')); }
   function close() { if (canLeave()) { view = 'read'; dirty = false; external = false; } }
   function navigate(path: string, hash?: string, replace?: boolean) {
-    if (!replace && !canLeave()) return;
+    if (!replace && !canLeave()) return false;
     if (!replace) { view = 'read'; dirty = false; external = false; }
-    route.navigate(path, hash, replace);
+    route.navigate(path, hash, replace); return true;
+  }
+  function search(query: string) {
+    if (!canLeave()) return false;
+    view = 'read'; dirty = false; external = false; actionsOpen = false; navigationOpen = false;
+    route.navigateSearch(query); return true;
   }
   async function edit() {
     if (!current || !canLeave()) return;
@@ -156,12 +164,17 @@
   {/if}
 {/snippet}
 
-<AppShell {config} {t} {navigationId} bind:navigationOpen bind:actionsOpen {actions} onActionsClosed={actionsClosed} onHome={() => navigate('home.md')}
+{#snippet searchResults()}
+  <SearchPage apiBase={client.apiBase} basePath={config.basePath} query={route.search || ''} {t} refreshKey={searchRefreshKey + refreshKey}
+    onNavigate={navigate} onSearch={search} />
+{/snippet}
+
+<AppShell searchQuery={route.search ?? undefined} searchRefreshKey={searchRefreshKey + refreshKey} onSearch={search} onSearchNavigate={navigate} {config} {t} {navigationId} bind:navigationOpen bind:actionsOpen {actions} onActionsClosed={actionsClosed} onHome={() => navigate('home.md')}
   actionsTitle={drawerTitle} actionsWide={drawerView === 'nox' || drawerView === 'history'} onActionsBack={drawerView === 'actions' ? undefined : () => { drawerView = drawerView === 'history' ? historyParent : 'actions'; }}>
   <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} toolbar={error || notice ? toolbar : undefined} {refreshKey}
     onImagePick={repairImage} showLinkWarnings
     {navigationId} bind:navigationOpen
-    body={view === 'read' ? undefined : workspace} onNavigate={navigate}
-    onPublication={() => { if (view === 'edit') external = true; }}
-    onPage={page => { current = page; document.title = page ? `${page.title} · ${config.brand.name}` : config.brand.name; }} />
+    body={view === 'edit' ? workspace : route.search === null ? undefined : searchResults} onNavigate={navigate}
+    onPublication={() => { if (view === 'edit') external = true; searchRefreshKey++; }}
+    onPage={page => { current = route.search === null ? page : null; if (route.search !== null) return; document.title = page ? `${page.title} · ${config.brand.name}` : config.brand.name; }} />
 </AppShell>

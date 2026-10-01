@@ -18,6 +18,8 @@ import { adminRoutes } from './admin-routes';
 import { securityHeaders, localAccess, errorHandler } from './security';
 import { NoxSync } from '../services/nox-sync';
 import { noxRoutes } from './nox-routes';
+import { SearchIndex } from '../domain/search';
+import { searchQuerySchema } from '../../../../packages/contracts';
 import { isImportedImage } from '../domain/imported-images';
 
 const mediaTypes: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif', '.svg': 'image/svg+xml' };
@@ -48,6 +50,7 @@ export async function createApplication(config: RuntimeConfig) {
   if (config.mode === 'admin') app.use(localAccess(config.adminOrigins, token));
   app.use(express.json({ limit: config.site.maxPageBytes * 6 + 4096 }));
   const routes = Router();
+  const search = new SearchIndex(t);
   app.use(config.site.basePath || '/', routes);
 
   routes.get('/healthz', (_req, res) => res.status(reader.current ? 200 : 503).json({ ready: Boolean(reader.current) }));
@@ -63,7 +66,13 @@ export async function createApplication(config: RuntimeConfig) {
     const requested = String(req.query.path || 'home.md');
     const page = publication.pages.find(item => item.path === requested) || publication.pages.find(item => item.aliases.includes(requested));
     if (!page) throw new DomainError('error.notFound', 404);
-    res.json({ ...page, publication: publication.revision, redirected: page.path !== requested });
+    search.update(publication);
+    res.json({ ...page, html: search.page(page).html, publication: publication.revision, redirected: page.path !== requested });
+  });
+  routes.get('/api/search', async (req, res) => {
+    const input = searchQuerySchema.parse(req.query);
+    await reader.refresh();
+    res.json(search.search(reader.require(), input.q, input.offset, input.limit));
   });
   const clients = new Set<Response>();
   const broadcast = (revision: string): void => {
@@ -99,9 +108,9 @@ export async function createApplication(config: RuntimeConfig) {
     res.type(type).sendFile(file, { dotfiles: 'allow' });
   });
   routes.use('/assets', express.static(path.join(config.webDir, 'assets'), { dotfiles: 'deny', fallthrough: false, immutable: true, maxAge: '1y' }));
-  routes.get(['/', /^\/wiki\/.+/], async (req, res) => {
+  routes.get(['/', '/search', /^\/wiki\/.+/], async (req, res) => {
     await reader.refresh();
-    if (req.path !== '/' && reader.current) {
+    if (req.path.startsWith('/wiki/') && reader.current) {
       const requested = fileFromLocation(req.path);
       if (!requested) throw new DomainError('error.invalidPath');
       const page = reader.current.pages.find(page => page.path === requested)

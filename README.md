@@ -136,6 +136,14 @@ Missing or ambiguous destinations, including missing headings, remain plain text
 
 Browser URLs omit `.md`: `races/Humans.md` is served at `/wiki/races/Humans`, while `home.md` remains `/`. Normal Markdown links such as `[Humanity](races/Humans.md)` also generate these URLs. Direct navigation and refresh work; legacy URLs with `.md` and moved-page aliases redirect to the current clean URL. Configured URL prefixes are preserved. Internal file paths and API paths still include `.md`.
 
+## Search
+
+The header search finds text throughout notes, ignoring case and accents (for example, `gut` matches `güt`). All words must occur in a note; complete phrases rank first. Both visible aliases and Obsidian link targets are searchable. Image references and filenames are excluded unless a note link explicitly refers to that name.
+
+The floating panel shows the ten most relevant notes, with matching text in bold. **Show all** opens a dedicated results page with additional results loaded in batches. Selecting a result opens the note at the matching passage. Search URLs support direct access and browser Back. Use the arrow keys to navigate quick results and Escape to close the search.
+
+Public search uses only published versions; Admin search includes saved drafts. Saving and publishing refresh open search results through the existing live connection. No external search service or separate persistent index is required.
+
 ## Development and checks
 
 The npm server scripts load the repository-root `.env` automatically when it exists. Set `PUBLIC_PORT` and `ADMIN_PORT` there to choose the local ports, and `SITE_CONFIG_FILE` to choose the site JSON. Existing shell variables override the same variables in `.env`. `PORT`, when explicitly set, overrides the selected app port (Docker uses it for its internal port); leave it unset when using separate public/admin ports. `SITE_CONFIG` remains a legacy fallback for `SITE_CONFIG_FILE`.

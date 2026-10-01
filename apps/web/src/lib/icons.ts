@@ -19,6 +19,7 @@ import WarningIcon from 'phosphor-svelte/lib/WarningIcon';
 import LinkSimpleIcon from 'phosphor-svelte/lib/LinkSimpleIcon';
 import FileMagnifyingGlassIcon from 'phosphor-svelte/lib/FileMagnifyingGlassIcon';
 import CodeIcon from 'phosphor-svelte/lib/CodeIcon';
+import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
 import EyeIcon from 'phosphor-svelte/lib/EyeIcon';
 
 export const icons = {
@@ -26,6 +27,6 @@ export const icons = {
   move: ArrowsOutCardinalIcon, delete: TrashIcon, create: FilePlusIcon, deleted: ArchiveIcon,
   nox: ArrowsClockwiseIcon, cancel: XIcon, menu: ListIcon, left: CaretLeftIcon, right: CaretRightIcon,
   back: ArrowLeftIcon, settings: GearSixIcon, collapse: ArrowsInLineVerticalIcon, expand: ArrowsOutLineVerticalIcon,
-  warning: WarningIcon, link: LinkSimpleIcon, unavailable: FileMagnifyingGlassIcon, markdown: CodeIcon, rendered: EyeIcon
+  search: MagnifyingGlassIcon, warning: WarningIcon, link: LinkSimpleIcon, unavailable: FileMagnifyingGlassIcon, markdown: CodeIcon, rendered: EyeIcon
 };
 export type IconName = keyof typeof icons;
