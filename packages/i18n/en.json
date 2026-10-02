@@ -232,6 +232,6 @@
   "relationships.zoomOut": "Zoom out",
   "relationships.fit": "Fit all notes",
   "relationships.chart": "Relations of {{name}}",
-  "relationships.description": "Arrows show link direction. Zoom and drag to explore. Open Links / Backlinks to navigate to notes and headings using the keyboard.",
+  "relationships.description": "Arrows show link direction. Drag a note to move its connections; drag empty space to pan. Zoom to explore. Open Links / Backlinks to navigate to notes and headings using the keyboard.",
   "relationships.graphUnavailable": "The graph could not be displayed. Use the links below."
 }

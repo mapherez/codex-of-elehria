@@ -138,7 +138,7 @@ Browser URLs omit `.md`: `races/Humans.md` is served at `/wiki/races/Humans`, wh
 
 ## Relationships
 
-The desktop right sidebar shows a local graph above **On this page**, including notes without headings. The current note stays at the center; arrows show outgoing links and backlinks. Hover to identify a note, click it to open it, and use wheel/gesture zoom, drag to pan, or the zoom and fit controls. Node sizes reflect the number of distinct notes linking to them. All direct neighbours are included; second-level relationships are not drawn.
+The desktop right sidebar shows a local graph above **On this page**, including notes without headings. The current note stays at the center; arrows show outgoing links and backlinks. Hover to identify a note, click it to open it, or drag a point to move it while its connections react. The simulation settles after release; the central note gently returns to the center. Drag empty space to pan, and use wheel/gesture zoom or the zoom and fit controls. Node sizes reflect the number of distinct notes linking to them. All direct neighbours are included; second-level relationships are not drawn.
 
 Open **Links / Backlinks** for keyboard-accessible links grouped by note and heading. Admin also shows missing or ambiguous references and invalid headings, with dashed graph connections. Code examples, images, external links and references within the same note do not create relationships. Reduced-motion preferences show the final layout without animation. The graph and list are suspended when the right sidebar is hidden, including mobile and the desktop actions drawer.
 
