@@ -1,0 +1,24 @@
+name: codex-public
+services:
+  wiki-public:
+    image: ghcr.io/mapherez/nox-wiki-public:${NOX_WIKI_TAG:-latest}
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:${PUBLIC_PORT:-3000}:3000"
+    volumes:
+      - type: bind
+        source: ${CONTENT_DIR:-./dist}
+        target: /data/content
+        read_only: true
+      - type: bind
+        source: ${SITE_CONFIG_FILE:-./config/site.json}
+        target: /app/config/site.json
+        read_only: true
+    networks:
+      - public
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+networks:
+  public:

@@ -35,6 +35,49 @@ Start it again with `docker compose -f compose-admin.yml start`. `pause` / `unpa
 
 On Linux, the workspace runs as UID/GID 1000. Ensure `dist/` and `state/` are writable by that account, or set a matching `user` in a local Compose override. Docker Desktop normally handles bind-mount permissions automatically.
 
+## CI and manual image publication
+
+**CI** runs on pushes and pull requests targeting `master`. It uses Node.js 24 with npm caching and runs `npm ci`, `npm run check`, `npm test` and `npm run build`. Superseded runs are cancelled. CI does not build or publish Docker images.
+
+To publish images, open **GitHub → Actions → Publish Images → Run workflow**, select **master**, and enter a **tag** (`latest` by default, or a version such as `1.2.0`). This workflow runs only when started manually. It repeats all four validation commands before building either Docker target; failed validation prevents both publications.
+
+The workflow publishes these images for **linux/amd64** and **linux/arm64**, using only the built-in `GITHUB_TOKEN`:
+
+- `ghcr.io/mapherez/nox-wiki-public`
+- `ghcr.io/mapherez/nox-wiki-admin`
+
+Both receive the chosen tag and `sha-<full commit SHA>`. The `sha-` prefix is reserved for commit tags. Publishing `1.2.0` does not also update `latest`; choose `latest` explicitly to update it. Nothing deploys automatically.
+
+## Deploy from GHCR
+
+Keep `compose.yml` and `compose-admin.yml` for local builds. Use `compose.deploy.yml` and `compose-admin.deploy.yml` to pull images from GHCR. The deployment files retain the same project names, services, bind mounts, loopback ports, separate networks, restart policies and hardening.
+
+After the first publication, set both GHCR packages' visibility to **Public** if the host should pull without registry credentials. GitHub creates new packages as private by default; see [container registry access](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry).
+
+Prepare the host directories and configuration as described below, then set the same image tag for both services in `.env`:
+
+```dotenv
+NOX_WIKI_TAG=1.2.0
+```
+
+Omit that variable or use `latest` to follow the manually published latest image. Start or update Public with:
+
+```sh
+docker compose -f compose.deploy.yml pull
+docker compose -f compose.deploy.yml up -d
+```
+
+Start or update Admin only when you need the workspace:
+
+```sh
+docker compose -f compose-admin.deploy.yml pull
+docker compose -f compose-admin.deploy.yml up -d
+```
+
+Stop Admin with `docker compose -f compose-admin.deploy.yml stop`. Its restart policy remains `"no"`.
+
+To pin a version or roll back, change `NOX_WIKI_TAG` to an existing version tag or `sha-<full commit SHA>`, then repeat the corresponding `pull` and `up -d` commands. These commands replace the containers; they retain the host documents, state and configuration.
+
 ## Host directories and configuration
 
 Copy `.env.example` to `.env` to change ports or bind-mount locations. They can be absolute paths:
@@ -47,7 +90,7 @@ PUBLIC_PORT=3000
 ADMIN_PORT=3001
 ```
 
-Create those directories and copy `config/site.json` to the configured site file before starting. The Compose files build from the source repository; after building the images, deployment copies of the Compose files can omit `build` and use the generated images.
+Create those directories and copy `config/site.json` to the configured site file before starting. The local Compose files build from this source repository; the deployment Compose files pull the published GHCR images.
 
 The public service mounts only documents and configuration, read-only. Git and transaction journals live in `state/` and are mounted only by the workspace. Updating an image does not replace these files.
 
