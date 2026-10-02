@@ -5,6 +5,7 @@
   import { pageUrl } from '../../../../../packages/contracts/routes';
   import { WikiClient, errorDetail } from '../api';
   import Icon from '../Icon.svelte';
+  import { useTheme } from '../theme/theme-context.svelte';
   import { GraphCanvas } from './graph-canvas';
   import type { GraphPoint } from './graph-types';
   import './relationships.css';
@@ -14,6 +15,7 @@
     onNavigate: (path: string, hash?: string) => void;
   } = $props();
   const uid = $props.id();
+  const theme = useTheme();
   let visible = $state(false);
   let response = $state.raw<RelationshipsResponse | null>(null);
   let loading = $state(false); let error = $state<ApiError['error'] | null>(null);
@@ -54,7 +56,7 @@
         hover: point => hovered = point,
         settled: value => settled = value,
         failed: () => graphFailed = true
-      }));
+      }, theme.resolved!));
       controller = view;
     } catch { graphFailed = true; return; }
     return () => { view.destroy(); controller = undefined; hovered = null; };
@@ -63,6 +65,7 @@
     const value = response; const view = controller;
     if (value && view) untrack(() => view.update(value));
   });
+  $effect(() => { if (theme.resolved && controller) controller.setTheme(theme.resolved); });
   function follow(event: MouseEvent, path: string, fragment = '') {
     if (event.button || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault(); onNavigate(path, fragment);

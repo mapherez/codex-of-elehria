@@ -6,10 +6,12 @@
   import HeaderSearch from '../lib/search/HeaderSearch.svelte';
   import Drawer from '../lib/Drawer.svelte';
   import Icon from '../lib/Icon.svelte';
+  import ThemeScope from '../lib/theme/ThemeScope.svelte';
+  import type { ThemeConfig } from '../../../../packages/theme';
   import './standalone.css';
-  let { config, t, children, onHome, navigationOpen = $bindable(false), navigationId,
+  let { config, t, theme, children, onHome, navigationOpen = $bindable(false), navigationId,
     actionsOpen = $bindable(false), actions, onActionsClosed, actionsTitle, onActionsBack, actionsWide = false, actionsPending = false, searchQuery, searchRefreshKey = 0, onSearch, onSearchNavigate }: {
-    config: PublicConfig; t: Translator; children: Snippet; onHome: () => void;
+    config: PublicConfig; t: Translator; theme?: ThemeConfig; children: Snippet; onHome: () => void;
     searchQuery?: string; searchRefreshKey?: number; onSearch: (query: string) => boolean | void; onSearchNavigate: (path: string, hash: string) => boolean | void;
     navigationOpen?: boolean; navigationId: string; actionsOpen?: boolean; actions?: Snippet; onActionsClosed?: () => void;
     actionsTitle?: string; onActionsBack?: () => void; actionsWide?: boolean; actionsPending?: boolean;
@@ -20,6 +22,7 @@
   $effect(() => { if (actionsOpen || navigationOpen) searchOpen = false; });
 </script>
 
+<ThemeScope siteTheme={config.theme} {theme} {t} standalone>
 <a class="skip-link" href="#content">{t('app.skip')}</a>
 <header class="app-header" class:search-open={searchOpen} class:with-actions={Boolean(actions)} class:actions-open={actionsOpen} class:navigation-open={navigationOpen}>
   <button type="button" class="header-control navigation-trigger" aria-label={t(navigationOpen ? 'nav.close' : 'nav.open')}
@@ -46,3 +49,5 @@
 </header>
 <div class="standalone-content" class:actions-visible={actionsOpen} class:actions-wide={actionsWide}>{@render children()}</div>
 {#if actions}<Drawer id={actionsId} title={actionsTitle || t('admin.actions')} {t} bind:open={actionsOpen} onClosed={onActionsClosed} onBack={onActionsBack} wide={actionsWide}>{@render actions()}</Drawer>{/if}
+
+</ThemeScope>

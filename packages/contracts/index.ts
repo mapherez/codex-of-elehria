@@ -1,3 +1,4 @@
+import type { ThemeConfig } from '../theme';
 import { z } from 'zod';
 import type { Dictionary, ErrorCode, Values } from '../i18n/index';
 
@@ -55,6 +56,7 @@ export interface DiffResponse {
   changes: { added?: boolean; removed?: boolean; value: string; count?: number }[];
 }
 export interface PublicConfig {
+  theme?: ThemeConfig;
   locale: string; messages: Dictionary; brand: { name: string; logoUrl: string | null }; basePath: string;
 }
 export interface MutationResult { page: PageRecord; unchanged?: boolean }

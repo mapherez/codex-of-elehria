@@ -1,3 +1,4 @@
+import type { ResolvedTheme } from '../../../../../packages/theme';
 import { select } from 'd3-selection';
 import { zoom, zoomIdentity, type ZoomBehavior, type ZoomTransform } from 'd3-zoom';
 import type { RelationshipsResponse } from '../../../../../packages/contracts';
@@ -29,7 +30,7 @@ export class GraphCanvas {
   private dragging: { pointerId: number; id: string; startX: number; startY: number; offsetX: number; offsetY: number; moved: boolean } | null = null;
   private suppressClick = false;
 
-  constructor(private readonly canvas: HTMLCanvasElement, private readonly callbacks: Callbacks) {
+  constructor(private readonly canvas: HTMLCanvasElement, private readonly callbacks: Callbacks, private theme: ResolvedTheme) {
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Canvas unavailable');
     this.context = context;
@@ -80,6 +81,8 @@ export class GraphCanvas {
     });
     this.observer.observe(canvas);
   }
+
+  setTheme(theme: ResolvedTheme): void { this.theme = theme; this.draw(); }
 
   update(response: RelationshipsResponse): void {
     this.finishDrag();
@@ -144,7 +147,7 @@ export class GraphCanvas {
       const ax = from.x + ux * radius(from) - uy * offset; const ay = from.y + uy * radius(from) + ux * offset;
       const bx = to.x - ux * (radius(to) + 2 / camera.k) - uy * offset; const by = to.y - uy * (radius(to) + 2 / camera.k) + ux * offset;
       const highlighted = this.hovered && [line.source, line.target].includes(this.hovered.id);
-      ctx.strokeStyle = line.pending ? '#c5a273' : highlighted ? '#bec9d4' : '#66717e';
+      ctx.strokeStyle = line.pending ? this.theme.semantic.warning.indicator : highlighted ? this.theme.colors.textMuted : this.theme.colors.borderControl;
       ctx.lineWidth = (highlighted ? 1.4 : .8) / camera.k;
       ctx.setLineDash(line.pending ? [3 / camera.k, 3 / camera.k] : []);
       ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
@@ -155,10 +158,10 @@ export class GraphCanvas {
     }
     for (const point of this.points.values()) {
       ctx.beginPath(); ctx.arc(point.x, point.y, radius(point), 0, Math.PI * 2);
-      ctx.fillStyle = point.id === this.center ? '#cfb991' : this.hovered?.id === point.id ? '#e7e6e2' : '#9aaec5';
+      ctx.fillStyle = point.id === this.center ? this.theme.colors.accentText : this.hovered?.id === point.id ? this.theme.colors.text : this.theme.colors.linkMuted;
       if (!point.warning) ctx.fill();
-      ctx.strokeStyle = point.warning ? '#c5a273' : '#101214'; ctx.lineWidth = 1.2 / camera.k; ctx.stroke();
-      if (this.hovered?.id === point.id) { ctx.beginPath(); ctx.arc(point.x, point.y, radius(point) + 3 / camera.k, 0, Math.PI * 2); ctx.strokeStyle = '#cfb991'; ctx.stroke(); }
+      ctx.strokeStyle = point.warning ? this.theme.semantic.warning.indicator : this.theme.colors.background; ctx.lineWidth = 1.2 / camera.k; ctx.stroke();
+      if (this.hovered?.id === point.id) { ctx.beginPath(); ctx.arc(point.x, point.y, radius(point) + 3 / camera.k, 0, Math.PI * 2); ctx.strokeStyle = this.theme.colors.accentText; ctx.stroke(); }
     }
   }
   private hit(event: { clientX: number; clientY: number }): GraphPoint | null {

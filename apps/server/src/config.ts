@@ -1,10 +1,12 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { z } from 'zod';
+import { validateTheme, type ThemeConfig } from '../../../packages/theme';
 import { createTranslator, english, type Dictionary } from '../../../packages/i18n';
 import { DomainError } from './domain/errors';
 
 const schema = z.object({
+  theme: z.custom<ThemeConfig>(value => validateTheme(value).ok).optional(),
   locale: z.string().min(2),
   brand: z.object({ name: z.string().min(1), logoUrl: z.string().nullable() }),
   basePath: z.string().regex(/^(\/[a-zA-Z0-9_-]+)*$/),

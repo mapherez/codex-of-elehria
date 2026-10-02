@@ -1,46 +1,50 @@
-:root { scrollbar-gutter: stable; color-scheme: dark; background: #101214; color: #e7e6e2; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-body { margin: 0; }
-.app-header { box-sizing: border-box; height: 5.25rem; display: flex; align-items: center; gap: 1.6rem; padding: 0 2rem; border-bottom: 1px solid #2b3037; position: sticky; top: 0; z-index: 20; background: #101214f5; }
-.brand { display: inline-flex; align-items: center; gap: .85rem; font-family: ui-serif, Georgia, serif; font-size: 1.25rem; color: #ede7dc; text-decoration: none; white-space: nowrap; }
-.brand-mark { box-sizing: border-box; display: grid; place-items: center; width: 2.15rem; height: 2.4rem; border: 1px solid #95815f; border-radius: .45rem .45rem .7rem .7rem; color: #d7bc8e; font-size: 1.35rem; background: #242018; }
-.brand-subtitle { padding-left: 1.6rem; border-left: 1px solid #343941; color: #9a9fa6; font-size: .75rem; }
-.header-control { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: .5rem; color: #cfb991; border: 1px solid transparent; border-radius: .5rem; background: transparent; cursor: pointer; flex-shrink: 0; }
-.header-control:hover, .header-control[aria-expanded="true"] { background: #24241f; border-color: #494332; }
-.header-control:focus-visible, .brand:focus-visible { outline: 2px solid #cfb991; outline-offset: 4px; }
-.header-control svg { flex-shrink: 0; }
+/* Layout-only reset, enabled only for the standalone mount. Theme colors stay on the instance. */
+html:has(> body > #app > [data-nox-standalone]) { scrollbar-gutter: stable; }
+body:has(> #app > [data-nox-standalone]) { margin: 0; }
+:where([data-nox-wiki]) .app-header { box-sizing: border-box; height: 5.25rem; display: flex; align-items: center; gap: 1.6rem; padding: 0 2rem; border-bottom: 1px solid var(--nox-border); position: sticky; top: 0; z-index: 20; background: rgb(var(--nox-background-rgb) / .96); }
+:where([data-nox-wiki]) .brand { display: inline-flex; align-items: center; gap: .85rem; font-family: var(--nox-font-display); font-size: 1.25rem; color: var(--nox-text); text-decoration: none; white-space: nowrap; }
+:where([data-nox-wiki]) .brand-mark { box-sizing: border-box; display: grid; place-items: center; width: 2.15rem; height: 2.4rem; border: 1px solid var(--nox-accent-stroke-strong); border-radius: .45rem .45rem .7rem .7rem; color: var(--nox-accent-text); font-size: 1.35rem; background: var(--nox-accent-wash-selected); }
+:where([data-nox-wiki]) .brand-subtitle { padding-left: 1.6rem; border-left: 1px solid var(--nox-border); color: var(--nox-text-muted); font-size: .75rem; }
+:where([data-nox-wiki]) .header-control { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: .5rem; color: var(--nox-accent-text); border: 1px solid transparent; border-radius: .5rem; background: transparent; cursor: pointer; flex-shrink: 0; }
+:where([data-nox-wiki]) .header-control:hover,
+:where([data-nox-wiki]) .header-control[aria-expanded="true"] { background: var(--nox-accent-wash-selected); border-color: var(--nox-accent-stroke-normal); }
+:where([data-nox-wiki]) .header-control:focus-visible,
+:where([data-nox-wiki]) .brand:focus-visible { outline: 2px solid var(--nox-accent-text); outline-offset: 4px; }
+:where([data-nox-wiki]) .header-control svg { flex-shrink: 0; }
 @media (min-width: 1025px) {
-  .standalone-content.actions-visible { padding-inline-end: 24rem; }
-  .standalone-content.actions-visible.actions-wide { padding-inline-end: min(38rem, 65vw); }
-  .standalone-content.actions-visible .codex { grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem; padding-inline-end: 1.5rem; }
-  .standalone-content.actions-visible .desktop-toc { display: none; }
-  .standalone-content.actions-visible .mobile-toc { display: block; }
+  :where([data-nox-wiki]) .standalone-content.actions-visible { padding-inline-end: 24rem; }
+  :where([data-nox-wiki]) .standalone-content.actions-visible.actions-wide { padding-inline-end: min(38rem, 65vw); }
+  :where([data-nox-wiki]) .standalone-content.actions-visible .codex { grid-template-columns: 14rem minmax(0, 1fr); gap: 1.5rem; padding-inline-end: 1.5rem; }
+  :where([data-nox-wiki]) .standalone-content.actions-visible .desktop-toc { display: none; }
+  :where([data-nox-wiki]) .standalone-content.actions-visible .mobile-toc { display: block; }
 }
-.header-tools { display: flex; align-items: center; gap: .3rem; margin-left: auto; min-width: 0; }
-.actions-trigger { margin-left: 0; position: relative; }
-.actions-pending { position: absolute; inset: 7px 7px auto auto; width: 7px; height: 7px; border-radius: 50%; background: #cfb991; box-shadow: 0 0 0 2px #101214; }
-.navigation-trigger { display: none; }
-.skip-link { position: fixed; top: -5rem; left: 1rem; z-index: 100; padding: .8rem; background: #cfb991; color: #151515; }
-.skip-link:focus { top: .5rem; }
-@media (max-width: 950px) { .brand-subtitle { display: none; } }
+:where([data-nox-wiki]) .header-tools { display: flex; align-items: center; gap: .3rem; margin-left: auto; min-width: 0; }
+:where([data-nox-wiki]) .actions-trigger { margin-left: 0; position: relative; }
+:where([data-nox-wiki]) .actions-pending { position: absolute; inset: 7px 7px auto auto; width: 7px; height: 7px; border-radius: 50%; background: var(--nox-accent-fill); box-shadow: 0 0 0 2px var(--nox-background); }
+:where([data-nox-wiki]) .navigation-trigger { display: none; }
+:where([data-nox-wiki]) .skip-link { position: fixed; top: -5rem; left: 1rem; z-index: 100; padding: .8rem; background: var(--nox-accent-fill); color: var(--nox-text-on-accent); }
+:where([data-nox-wiki]) .skip-link:focus { top: .5rem; }
+@media (max-width: 950px) { :where([data-nox-wiki]) .brand-subtitle { display: none; } }
 @media (min-width: 1025px) and (max-width: 1350px) {
-  .standalone-content.actions-visible .codex { grid-template-columns: minmax(0, 1fr); padding-inline: 1.5rem; }
-  .standalone-content.actions-visible .sidebar { display: none; }
-  .app-header:is(.actions-open, .navigation-open) .navigation-trigger { display: inline-grid; }
-  .app-header:is(.actions-open, .navigation-open) .brand-subtitle { display: none; }
+  :where([data-nox-wiki]) .standalone-content.actions-visible .codex { grid-template-columns: minmax(0, 1fr); padding-inline: 1.5rem; }
+  :where([data-nox-wiki]) .standalone-content.actions-visible .sidebar { display: none; }
+  :where([data-nox-wiki]) .app-header:is(.actions-open, .navigation-open) .navigation-trigger { display: inline-grid; }
+  :where([data-nox-wiki]) .app-header:is(.actions-open, .navigation-open) .brand-subtitle { display: none; }
 }
 @media (max-width: 1024px) {
-  .app-header { height: 4rem; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; padding: 0 .5rem; gap: .4rem; }
-  .navigation-trigger { display: inline-grid; grid-column: 1; grid-row: 1; }
-  .brand { grid-column: 2; grid-row: 1; justify-self: center; max-width: 100%; font-size: clamp(.9rem, 3vw, 1.15rem); transition: opacity 160ms ease 180ms, visibility 0s linear 180ms; }
-  .brand-name { overflow: hidden; text-overflow: ellipsis; }
-  .brand-mark, .brand img { display: none; }
-  .app-header.with-actions { grid-template-columns: 44px minmax(0, 1fr) 92px; }
-  .header-tools { grid-column: 2 / -1; grid-row: 1; width: 100%; margin: 0; justify-content: flex-end; pointer-events: none; }
-  .header-tools > * { pointer-events: auto; }
-  .app-header.with-actions .header-tools { --search-end-space: calc(44px + .3rem); }
-  .app-header.search-open .brand { opacity: 0; visibility: hidden; transition-delay: 0s; }
-  .actions-trigger { margin: 0; }
+  :where([data-nox-wiki]) .app-header { height: 4rem; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; padding: 0 .5rem; gap: .4rem; }
+  :where([data-nox-wiki]) .navigation-trigger { display: inline-grid; grid-column: 1; grid-row: 1; }
+  :where([data-nox-wiki]) .brand { grid-column: 2; grid-row: 1; justify-self: center; max-width: 100%; font-size: clamp(.9rem, 3vw, 1.15rem); transition: opacity 160ms ease 180ms, visibility 0s linear 180ms; }
+  :where([data-nox-wiki]) .brand-name { overflow: hidden; text-overflow: ellipsis; }
+  :where([data-nox-wiki]) .brand-mark,
+:where([data-nox-wiki]) .brand img { display: none; }
+  :where([data-nox-wiki]) .app-header.with-actions { grid-template-columns: 44px minmax(0, 1fr) 92px; }
+  :where([data-nox-wiki]) .header-tools { grid-column: 2 / -1; grid-row: 1; width: 100%; margin: 0; justify-content: flex-end; pointer-events: none; }
+  :where([data-nox-wiki]) .header-tools > * { pointer-events: auto; }
+  :where([data-nox-wiki]) .app-header.with-actions .header-tools { --search-end-space: calc(44px + .3rem); }
+  :where([data-nox-wiki]) .app-header.search-open .brand { opacity: 0; visibility: hidden; transition-delay: 0s; }
+  :where([data-nox-wiki]) .actions-trigger { margin: 0; }
 }
 @media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
-  .brand { transition: none; }
+  :where([data-nox-wiki]) .brand { transition: none; }
 }

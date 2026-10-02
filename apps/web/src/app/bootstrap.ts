@@ -1,6 +1,7 @@
 import { mount, type Component } from 'svelte';
 import type { PublicConfig } from '../../../../packages/contracts';
 import { createTranslator } from '../../../../packages/i18n';
+import { ThemeValidationError } from '../../../../packages/theme';
 import { WikiClient, errorDetail } from '../lib/api';
 
 export async function bootstrap(App: Component<{ config: PublicConfig }>): Promise<void> {
@@ -16,7 +17,7 @@ export async function bootstrap(App: Component<{ config: PublicConfig }>): Promi
     const detail = errorDetail(error);
     const message = document.createElement('p');
     message.setAttribute('role', 'alert');
-    message.textContent = t(detail.code, detail.params);
+    message.textContent = t(error instanceof ThemeValidationError ? 'error.theme' : detail.code, detail.params);
     target.replaceChildren(message);
   }
 }

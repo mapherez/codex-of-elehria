@@ -1,0 +1,9 @@
+[data-nox-wiki] {
+  box-sizing: border-box; min-width: 0; width: 100%; isolation: isolate;
+  background: var(--nox-background); color: var(--nox-text); font-family: var(--nox-font-body);
+}
+[data-nox-wiki][data-nox-standalone] { min-height: 100dvh; }
+:where([data-nox-wiki]) :where(button,input,textarea,select) { font: inherit; }
+:where([data-nox-wiki]) .theme-error {
+  margin: 0; padding: 1rem; color: var(--nox-danger-text); background: var(--nox-danger-wash-subtle);
+}

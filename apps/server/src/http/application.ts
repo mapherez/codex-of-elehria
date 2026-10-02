@@ -1,3 +1,4 @@
+import { resolveTheme } from '../../../../packages/theme';
 import express, { Router, type Response } from 'express';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -27,6 +28,7 @@ const mediaTypes: Record<string, string> = { '.png': 'image/png', '.jpg': 'image
 const escapeHtml = (text: string): string => text.replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 
 export async function createApplication(config: RuntimeConfig) {
+  const colorScheme = resolveTheme(config.site.theme).colorScheme;
   const t = createTranslator(config.site.locale, config.messages);
   const renderer = new MarkdownRenderer(t, config.site.basePath);
   let wiki: WikiService | undefined;
@@ -56,7 +58,7 @@ export async function createApplication(config: RuntimeConfig) {
   app.use(config.site.basePath || '/', routes);
 
   routes.get('/healthz', (_req, res) => res.status(reader.current ? 200 : 503).json({ ready: Boolean(reader.current) }));
-  routes.get('/api/config', (_req, res) => res.json({ brand: config.site.brand, locale: config.site.locale, messages: config.messages, basePath: config.site.basePath }));
+  routes.get('/api/config', (_req, res) => res.json({ theme: config.site.theme, brand: config.site.brand, locale: config.site.locale, messages: config.messages, basePath: config.site.basePath }));
   routes.get('/api/navigation', async (_req, res) => {
     await reader.refresh();
     const publication = reader.require();
@@ -134,7 +136,8 @@ export async function createApplication(config: RuntimeConfig) {
     res.type('html').send(html.replaceAll('./assets/', `${config.site.basePath}/assets/`)
       .replace('__SITE_NAME__', escapeHtml(config.site.brand.name))
       .replace('__SITE_LOCALE__', escapeHtml(config.site.locale))
-      .replace('__SITE_BASE__', escapeHtml(config.site.basePath)));
+      .replace('__SITE_BASE__', escapeHtml(config.site.basePath))
+      .replace('__SITE_SCHEME__', colorScheme));
   });
   app.use((_req, _res, next) => next(new DomainError('error.notFound', 404)));
   app.use(errorHandler);

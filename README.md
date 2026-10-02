@@ -55,6 +55,10 @@ The public service mounts only documents and configuration, read-only. Git and t
 
 All application copy is in `packages/i18n/en.json`. UI components use typed translation keys; API errors contain codes and parameters instead of embedded display text. Brand and Git identity come from site configuration. To override or add a language at runtime, mount a JSON dictionary and set `LOCALE_FILE` to its container path on both services, then set `locale` in site configuration. Missing keys fall back to English. Sample Markdown is editable content, separate from interface localization.
 
+## Theme
+
+An optional `theme` in `config/site.json` configures five colors and three font stacks for the whole application, including Admin and the graph. Partial overrides inherit defaults; embedded readers can override the theme per instance. See the [theme contract](docs/theme-contract.md) for defaults, light/dark examples, validation and the TypeScript API. No publication or state reset is needed.
+
 ## Cloudflare
 
 Route only the public service. If `cloudflared` runs on the host, use `http://localhost:3000` as its origin. If it runs in Docker, connect it to the public Compose network and use `http://wiki-public:3000`:

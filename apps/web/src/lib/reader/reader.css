@@ -1,21 +1,9 @@
-.codex {
-  --codex-bg: #101214;
-  --codex-panel: #15181c;
-  --codex-text: #e7e6e2;
-  --codex-muted: #a0a6ae;
-  --codex-line: #2b3037;
-  --codex-accent: #cfb991;
-  --codex-link: #a9c7ec;
+:where([data-nox-wiki]) .codex {
   --codex-top: 5.25rem;
-  color: var(--codex-text);
-  background: var(--codex-bg);
+  color: var(--nox-text);
+  background: var(--nox-background);
   font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+    var(--nox-font-body);
   font-size: 0.9375rem;
   line-height: 1.65;
   display: grid;
@@ -27,98 +15,98 @@
   padding: 0 2.5rem 0 0;
   overflow-wrap: anywhere;
 }
-.codex *,
-.codex *::before,
-.codex *::after {
+:where([data-nox-wiki]) .codex *,
+:where([data-nox-wiki]) .codex *::before,
+:where([data-nox-wiki]) .codex *::after {
   box-sizing: border-box;
 }
-.codex [hidden] {
+:where([data-nox-wiki]) .codex [hidden] {
   display: none !important;
 }
-.codex .sidebar-label { display: flex; align-items: center; gap: .45rem; }
-.codex button.navigation-expand { display: grid; place-items: center; flex-shrink: 0; width: 44px; min-height: 44px; padding: .5rem; border: 0; background: transparent; color: var(--codex-muted); }
-.codex button.navigation-expand:hover:not(:disabled) { border: 0; background: #ffffff07; color: var(--codex-accent); }
-.codex a {
-  color: var(--codex-link);
+:where([data-nox-wiki]) .codex .sidebar-label { display: flex; align-items: center; gap: .45rem; }
+:where([data-nox-wiki]) .codex button.navigation-expand { display: grid; place-items: center; flex-shrink: 0; width: 44px; min-height: 44px; padding: .5rem; border: 0; background: transparent; color: var(--nox-text-muted); }
+:where([data-nox-wiki]) .codex button.navigation-expand:hover:not(:disabled) { border: 0; background: var(--nox-neutral-wash-hover); color: var(--nox-accent-text); }
+:where([data-nox-wiki]) .codex a {
+  color: var(--nox-link-text);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
 }
-.codex :where(a, button, summary, input, textarea, select):focus-visible {
-  outline: 2px solid var(--codex-accent);
+:where([data-nox-wiki]) .codex :where(a, button, summary, input, textarea, select):focus-visible {
+  outline: 2px solid var(--nox-accent-text);
   outline-offset: 4px;
 }
-.codex button,
-.codex input,
-.codex textarea,
-.codex select {
+:where([data-nox-wiki]) .codex button,
+:where([data-nox-wiki]) .codex input,
+:where([data-nox-wiki]) .codex textarea,
+:where([data-nox-wiki]) .codex select {
   font: inherit;
 }
-.codex button {
-  border: 1px solid #626b78;
+:where([data-nox-wiki]) .codex button {
+  border: 1px solid var(--nox-border-control);
   border-radius: 0.45rem;
-  background: #1b2026;
-  color: var(--codex-text);
+  background: var(--nox-surface-control);
+  color: var(--nox-text);
   padding: 0.55rem 0.9rem;
   cursor: pointer;
   line-height: 1.3;
 }
-.codex button:hover {
-  background: #29313a;
+:where([data-nox-wiki]) .codex button:hover {
+  background: var(--nox-surface-hover);
 }
-.codex button:disabled {
+:where([data-nox-wiki]) .codex button:disabled {
   opacity: 0.5;
   cursor: wait;
 }
-.codex button.primary {
-  background: var(--codex-accent);
-  color: #191713;
-  border-color: var(--codex-accent);
+:where([data-nox-wiki]) .codex button.primary {
+  background: var(--nox-accent-fill);
+  color: var(--nox-text-on-accent);
+  border-color: var(--nox-accent-text);
   font-weight: 650;
 }
-.codex button.primary:hover {
-  filter: brightness(1.1);
+:where([data-nox-wiki]) .codex button.primary:hover {
+  box-shadow: inset 0 0 0 1px var(--nox-text-on-accent);
 }
-.codex button.danger {
-  color: #ffb8b8;
-  border-color: #ba6c6c;
+:where([data-nox-wiki]) .codex button.danger {
+  color: var(--nox-danger-text);
+  border-color: var(--nox-danger-indicator);
 }
-.codex button.quiet {
+:where([data-nox-wiki]) .codex button.quiet {
   background: transparent;
-  border-color: var(--codex-line);
+  border-color: var(--nox-border);
 }
-.codex .muted {
-  color: var(--codex-muted);
+:where([data-nox-wiki]) .codex .muted {
+  color: var(--nox-text-muted);
 }
-.codex .sidebar {
+:where([data-nox-wiki]) .codex .sidebar {
   position: sticky;
   top: var(--codex-top);
   height: calc(100dvh - var(--codex-top));
   overflow-y: auto;
-  border-right: 1px solid var(--codex-line);
+  border-right: 1px solid var(--nox-border);
   padding: 2.8rem 1.1rem 1.5rem 1.5rem;
   scrollbar-width: thin;
   scrollbar-gutter: stable;
-  scrollbar-color: #3b424d transparent;
+  scrollbar-color: var(--nox-border-control) transparent;
 }
-.codex .sidebar-label {
-  color: var(--codex-muted);
+:where([data-nox-wiki]) .codex .sidebar-label {
+  color: var(--nox-text-muted);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   margin: 0 0.6rem 1.7rem;
 }
-.codex .tree-list {
+:where([data-nox-wiki]) .codex .tree-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-.codex .tree-list .tree-list {
+:where([data-nox-wiki]) .codex .tree-list .tree-list {
   margin: 0.15rem 0 0.7rem 0.8rem;
   padding-left: 0.55rem;
-  border-left: 1px solid var(--codex-line);
+  border-left: 1px solid var(--nox-border);
 }
-.codex .tree-list summary {
+:where([data-nox-wiki]) .codex .tree-list summary {
   display: flex;
   gap: 0.6rem;
   align-items: baseline;
@@ -128,38 +116,38 @@
   padding: 0.55rem 0.6rem;
   font-size: 0.83rem;
 }
-.codex .tree-list summary::-webkit-details-marker {
+:where([data-nox-wiki]) .codex .tree-list summary::-webkit-details-marker {
   display: none;
 }
-.codex .tree-chevron {
+:where([data-nox-wiki]) .codex .tree-chevron {
   flex-shrink: 0;
-  color: var(--codex-muted);
+  color: var(--nox-text-muted);
   transform: rotate(0deg);
 }
-.codex details[open] > summary > .tree-chevron {
+:where([data-nox-wiki]) .codex details[open] > summary > .tree-chevron {
   transform: rotate(90deg);
 }
-.codex .tree-list a {
+:where([data-nox-wiki]) .codex .tree-list a {
   display: flex;
   gap: 0.65rem;
   align-items: baseline;
   padding: 0.48rem 0.7rem;
   border-radius: 0.3rem;
   font-size: 0.82rem;
-  color: var(--codex-muted);
+  color: var(--nox-text-muted);
   text-decoration: none;
   border-left: 2px solid transparent;
 }
-.codex .tree-list a:hover {
-  color: var(--codex-text);
-  background: #1b2026;
+:where([data-nox-wiki]) .codex .tree-list a:hover {
+  color: var(--nox-text);
+  background: var(--nox-surface-control);
 }
-.codex .tree-list a.active {
-  background: #24241f;
-  color: #e3cfaa;
-  border-left-color: var(--codex-accent);
+:where([data-nox-wiki]) .codex .tree-list a.active {
+  background: var(--nox-accent-wash-selected);
+  color: var(--nox-accent-text);
+  border-left-color: var(--nox-accent-text);
 }
-.codex .page-dot {
+:where([data-nox-wiki]) .codex .page-dot {
   width: 0.28rem;
   height: 0.28rem;
   border: 1px solid currentColor;
@@ -167,152 +155,152 @@
   align-self: center;
   border-radius: 1px;
 }
-.codex .sidebar-footer {
-  border-top: 1px solid var(--codex-line);
+:where([data-nox-wiki]) .codex .sidebar-footer {
+  border-top: 1px solid var(--nox-border);
   padding-top: 1.2rem;
   margin: 2rem 0.6rem 0;
-  color: var(--codex-muted);
+  color: var(--nox-text-muted);
   font-size: 0.7rem;
 }
-.codex .nav-empty {
+:where([data-nox-wiki]) .codex .nav-empty {
   font-size: 0.8rem;
   margin: 0.6rem;
 }
-.codex .reader-main {
+:where([data-nox-wiki]) .codex .reader-main {
   min-width: 0;
   padding: 2.7rem 0 6rem;
   outline: none;
   scroll-margin-top: var(--codex-top);
 }
-.codex .page-context {
+:where([data-nox-wiki]) .codex .page-context {
   display: flex;
   gap: 0.65rem;
-  color: var(--codex-muted);
+  color: var(--nox-text-muted);
   font-size: 0.8rem;
   margin-bottom: 2.6rem;
 }
-.codex .page-context a {
-  color: var(--codex-accent);
+:where([data-nox-wiki]) .codex .page-context a {
+  color: var(--nox-accent-text);
   text-decoration: none;
 }
-.codex .page-toolbar {
+:where([data-nox-wiki]) .codex .page-toolbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.6rem;
   margin: -1.2rem 0 1.8rem;
 }
-.codex .page-toolbar .push {
+:where([data-nox-wiki]) .codex .page-toolbar .push {
   margin-left: auto;
 }
-.codex .page-toolbar button {
+:where([data-nox-wiki]) .codex .page-toolbar button {
   font-size: 0.78rem;
 }
-.codex .prose {
+:where([data-nox-wiki]) .codex .prose {
   max-width: none;
 }
-.codex .prose > :first-child {
+:where([data-nox-wiki]) .codex .prose > :first-child {
   margin-top: 0;
 }
-.codex .prose h1 {
-  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+:where([data-nox-wiki]) .codex .prose h1 {
+  font-family: var(--nox-font-display);
   font-size: clamp(2.5rem, 4vw, 2.8rem);
   font-weight: 450;
   letter-spacing: -0.045em;
   line-height: 1.12;
   margin-bottom: 1.7rem;
-  color: #f4f0e8;
+  color: var(--nox-text);
 }
-.codex .prose h2 {
+:where([data-nox-wiki]) .codex .prose h2 {
   margin: 3rem 0 1rem;
   padding-top: 0.9rem;
   font-size: 1.4rem;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
-.codex .prose h3 {
+:where([data-nox-wiki]) .codex .prose h3 {
   font-size: 1.1rem;
   margin-top: 2rem;
 }
-.codex .prose :where(h1, h2, h3, h4, h5, h6) {
+:where([data-nox-wiki]) .codex .prose :where(h1, h2, h3, h4, h5, h6) {
   scroll-margin-top: calc(var(--codex-top) + 1.5rem);
 }
-.codex .prose p {
+:where([data-nox-wiki]) .codex .prose p {
   margin: 1rem 0 1.35rem;
 }
-.codex .prose > h1 + p {
+:where([data-nox-wiki]) .codex .prose > h1 + p {
   font-size: 1.08rem;
-  color: #bbc0c6;
+  color: var(--nox-text-muted);
   line-height: 1.8;
 }
-.codex .prose li {
+:where([data-nox-wiki]) .codex .prose li {
   margin: 0.45rem 0;
 }
-.codex .prose blockquote {
+:where([data-nox-wiki]) .codex .prose blockquote {
   margin: 1.8rem 0;
   padding: 0.2rem 1.3rem;
-  border-left: 2px solid var(--codex-accent);
-  background: #191c20;
-  color: #b9bdc3;
+  border-left: 2px solid var(--nox-accent-text);
+  background: var(--nox-surface-field);
+  color: var(--nox-text-muted);
 }
-.codex .prose code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+:where([data-nox-wiki]) .codex .prose code {
+  font-family: var(--nox-font-mono);
   font-size: 0.85em;
-  background: #232830;
+  background: var(--nox-surface-control);
   padding: 0.16em 0.35em;
   border-radius: 0.25rem;
-  color: #dbd6c7;
+  color: var(--nox-text);
 }
-.codex .prose pre {
+:where([data-nox-wiki]) .codex .prose pre {
   overflow: auto;
   padding: 1.25rem;
-  border: 1px solid var(--codex-line);
+  border: 1px solid var(--nox-border);
   border-radius: 0.5rem;
-  background: #161a20;
+  background: var(--nox-surface-field);
 }
-.codex .prose pre code {
+:where([data-nox-wiki]) .codex .prose pre code {
   background: none;
   padding: 0;
 }
-.codex .prose img {
+:where([data-nox-wiki]) .codex .prose img {
   max-width: 100%;
   height: auto;
   border-radius: 0.4rem;
 }
-.codex .prose table {
+:where([data-nox-wiki]) .codex .prose table {
   display: block;
   max-width: 100%;
   overflow-x: auto;
   border-collapse: collapse;
   margin: 1.5rem 0;
 }
-.codex .prose :where(td, th) {
+:where([data-nox-wiki]) .codex .prose :where(td, th) {
   padding: 0.7rem 1rem;
-  border: 1px solid var(--codex-line);
+  border: 1px solid var(--nox-border);
   text-align: left;
 }
-.codex .prose th {
-  background: #1b2026;
+:where([data-nox-wiki]) .codex .prose th {
+  background: var(--nox-surface-control);
 }
-.codex .prose hr {
+:where([data-nox-wiki]) .codex .prose hr {
   border: 0;
-  border-top: 1px solid var(--codex-line);
+  border-top: 1px solid var(--nox-border);
   margin: 2rem 0;
 }
-.codex .heading-anchor {
+:where([data-nox-wiki]) .codex .heading-anchor {
   display: inline-flex;
   vertical-align: middle;
   margin-left: 0.5em;
-  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--nox-font-body);
   font-size: 0.65em;
   text-decoration: none;
   opacity: 0;
 }
-.codex .prose :where(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
-.codex .heading-anchor:focus-visible {
+:where([data-nox-wiki]) .codex .prose :where(h1, h2, h3, h4, h5, h6):hover .heading-anchor,
+:where([data-nox-wiki]) .codex .heading-anchor:focus-visible {
   opacity: 1;
 }
-.codex .desktop-toc {
+:where([data-nox-wiki]) .codex .desktop-toc {
   position: sticky;
   top: calc(var(--codex-top) + 3rem);
   align-self: start;
@@ -322,143 +310,146 @@
   scrollbar-width: thin;
   scrollbar-gutter: stable;
 }
-.codex .toc-title {
+:where([data-nox-wiki]) .codex .toc-title {
   font-size: 0.75rem;
   font-weight: 650;
   margin: 0 0 1rem;
 }
-.codex .toc-links ul {
+:where([data-nox-wiki]) .codex .toc-links ul {
   list-style: none;
   padding: 0;
   margin: 0;
-  border-left: 1px solid var(--codex-line);
+  border-left: 1px solid var(--nox-border);
 }
-.codex .toc-links a {
+:where([data-nox-wiki]) .codex .toc-links a {
   display: block;
   padding: 0.4rem 0.3rem 0.4rem calc(1rem + var(--heading-depth) * 0.65rem);
   font-size: 0.8rem;
-  color: var(--codex-muted);
+  color: var(--nox-text-muted);
   text-decoration: none;
   border-left: 2px solid transparent;
   margin-left: -1px;
 }
-.codex .toc-links a:hover,
-.codex .toc-links a.active {
-  color: var(--codex-accent);
+:where([data-nox-wiki]) .codex .toc-links a:hover,
+:where([data-nox-wiki]) .codex .toc-links a.active {
+  color: var(--nox-accent-text);
 }
-.codex .toc-links a.active {
-  border-left-color: var(--codex-accent);
+:where([data-nox-wiki]) .codex .toc-links a.active {
+  border-left-color: var(--nox-accent-text);
 }
-.codex .mobile-toc {
+:where([data-nox-wiki]) .codex .mobile-toc {
   display: none;
 }
-.codex .notice {
+:where([data-nox-wiki]) .codex .notice {
   padding: 0.8rem 1rem;
-  border: 1px solid #6a604c;
-  background: #26231d;
+  border: 1px solid var(--nox-warning-stroke-strong);
+  background: var(--nox-warning-wash-subtle);
   border-radius: 0.4rem;
   font-size: 0.83rem;
+  color: var(--nox-warning-text);
 }
-.codex .error {
-  border-color: #976262;
-  background: #301f23;
+:where([data-nox-wiki]) .codex .error {
+  border-color: var(--nox-danger-stroke-strong);
+  background: var(--nox-danger-wash-subtle);
+  color: var(--nox-danger-text);
 }
-.codex .empty-state {
+:where([data-nox-wiki]) .codex .empty-state {
   padding: 4rem 0;
   max-width: 36rem;
 }
-.codex .empty-mark {
-  color: var(--codex-accent);
+:where([data-nox-wiki]) .codex .empty-mark {
+  color: var(--nox-accent-text);
   font-size: 2.5rem;
 }
-.codex .empty-state p {
-  color: var(--codex-muted);
+:where([data-nox-wiki]) .codex .empty-state p {
+  color: var(--nox-text-muted);
 }
-.codex.workspace {
+:where([data-nox-wiki]) .codex.workspace {
   grid-template-columns: 16.5rem minmax(0, 1fr);
 }
 @media (min-width: 1600px) {
-  .codex {
+  :where([data-nox-wiki]) .codex {
     padding-right: 3rem;
   }
 }
 @media (max-width: 1120px) {
-  .codex {
+  :where([data-nox-wiki]) .codex {
     grid-template-columns: 14.5rem minmax(0, 1fr);
     padding-right: 2rem;
     gap: 2rem;
   }
-  .codex .desktop-toc {
+  :where([data-nox-wiki]) .codex .desktop-toc {
     display: none;
   }
-  .codex .mobile-toc {
+  :where([data-nox-wiki]) .codex .mobile-toc {
     display: block;
     padding: 0.8rem 1rem;
     margin-bottom: 2rem;
-    border: 1px solid var(--codex-line);
+    border: 1px solid var(--nox-border);
     border-radius: 0.4rem;
     font-size: 0.8rem;
   }
-  .codex .mobile-toc summary {
+  :where([data-nox-wiki]) .codex .mobile-toc summary {
     cursor: pointer;
   }
-  .codex .mobile-toc .toc-links {
+  :where([data-nox-wiki]) .codex .mobile-toc .toc-links {
     margin-top: 1rem;
   }
-  .codex.workspace {
+  :where([data-nox-wiki]) .codex.workspace {
     grid-template-columns: 14.5rem minmax(0, 1fr);
   }
 }
 @media (max-width: 1024px) {
-  .codex,
-  .codex.workspace { --codex-top: 4rem; display: block; padding: 0 1.5rem; }
-  .codex .sidebar { display: none; }
-  .codex .reader-main { padding-top: 1.6rem; }
-  .codex .tree-list :is(a, summary), .codex .toc-links a { min-height: 44px; font-size: .9rem; }
+  :where([data-nox-wiki]) .codex,
+:where([data-nox-wiki]) .codex.workspace { --codex-top: 4rem; display: block; padding: 0 1.5rem; }
+  :where([data-nox-wiki]) .codex .sidebar { display: none; }
+  :where([data-nox-wiki]) .codex .reader-main { padding-top: 1.6rem; }
+  :where([data-nox-wiki]) .codex .tree-list :is(a, summary),
+:where([data-nox-wiki]) .codex .toc-links a { min-height: 44px; font-size: .9rem; }
 }
 @media (max-width: 720px) {
-  .codex,
-  .codex.workspace {
+  :where([data-nox-wiki]) .codex,
+:where([data-nox-wiki]) .codex.workspace {
     --codex-top: 4rem;
     display: block;
     padding: 0 1.25rem;
   }
-  .codex .sidebar {
+  :where([data-nox-wiki]) .codex .sidebar {
     display: none;
   }
-  .codex .reader-main {
+  :where([data-nox-wiki]) .codex .reader-main {
     padding-top: 1.6rem;
   }
-  .codex .page-context {
+  :where([data-nox-wiki]) .codex .page-context {
     margin-bottom: 1.8rem;
   }
-  .codex .page-toolbar {
+  :where([data-nox-wiki]) .codex .page-toolbar {
     margin-top: 0;
   }
-  .codex .prose h1 {
+  :where([data-nox-wiki]) .codex .prose h1 {
     font-size: 2.5rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .codex * {
+  :where([data-nox-wiki]) .codex * {
     scroll-behavior: auto !important;
   }
 }
-.codex .image-unresolved {
+:where([data-nox-wiki]) .codex .image-unresolved {
   display: inline-block;
-  color: var(--codex-muted);
+  color: var(--nox-text-muted);
 }
-.codex .image-repair {
+:where([data-nox-wiki]) .codex .image-repair {
   display: inline-grid;
   place-items: center;
   min-width: 2rem;
   min-height: 2rem;
   padding: 0.2rem 0.4rem;
-  color: var(--codex-accent);
+  color: var(--nox-accent-text);
   vertical-align: middle;
 }
-.codex .note-warning { display: none; }
-.codex .prose :where(.image-unresolved, .note-warning, .image-repair) svg { vertical-align: middle; }
-.codex .mobile-toc summary { list-style: none; display: flex; align-items: center; gap: .5rem; }
-.codex .mobile-toc summary::-webkit-details-marker { display: none; }
-.codex.show-link-warnings .note-warning { display: inline; margin-inline-start: .3em; color: var(--codex-accent); }
+:where([data-nox-wiki]) .codex .note-warning { display: none; }
+:where([data-nox-wiki]) .codex .prose :where(.image-unresolved, .note-warning, .image-repair) svg { vertical-align: middle; }
+:where([data-nox-wiki]) .codex .mobile-toc summary { list-style: none; display: flex; align-items: center; gap: .5rem; }
+:where([data-nox-wiki]) .codex .mobile-toc summary::-webkit-details-marker { display: none; }
+:where([data-nox-wiki]) .codex.show-link-warnings .note-warning { display: inline; margin-inline-start: .3em; color: var(--nox-warning-text); }

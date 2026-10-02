@@ -11,10 +11,13 @@
   import Article from './Article.svelte';
   import Drawer from '../Drawer.svelte';
   import Icon from '../Icon.svelte';
+  import ThemeScope from '../theme/ThemeScope.svelte';
+  import type { ThemeConfig, ThemeIssue } from '../../../../../packages/theme';
   import './reader.css';
 
-  let { apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, showLinkWarnings = false, toolbar, body, hash = '', refreshKey = 0,
+  let { theme, siteTheme, onThemeError, apiBase, basePath = '', path = 'home.md', t, onNavigate, onPage, onPublication, onImagePick, showLinkWarnings = false, toolbar, body, hash = '', refreshKey = 0,
     navigationOpen = $bindable(false), navigationId }: {
+    theme?: ThemeConfig; siteTheme?: ThemeConfig; onThemeError?: (issues: readonly ThemeIssue[]) => void;
     apiBase: string; basePath?: string; path?: string; hash?: string; refreshKey?: number; t: Translator;
     onNavigate: (path: string, hash?: string, replace?: boolean) => void;
     onPage?: (page: PageResponse | null) => void; onPublication?: () => void;
@@ -88,6 +91,7 @@
 </script>
 
 <svelte:window onscroll={updateActive} onresize={updateActive} />
+<ThemeScope {theme} {siteTheme} {onThemeError} {t}>
 <div class="codex" class:workspace={Boolean(body)} class:show-link-warnings={showLinkWarnings}>
   <aside class="sidebar">
     <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} />
@@ -138,3 +142,5 @@
     <div class="sidebar-footer">{t('nav.count', { count: model.count })}</div>
   </div>
 </Drawer>
+
+</ThemeScope>

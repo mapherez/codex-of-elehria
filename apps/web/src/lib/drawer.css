@@ -1,44 +1,44 @@
-.codex.side-drawer {
+:where([data-nox-wiki]) .codex.side-drawer {
   position: fixed; inset: 0 0 0 auto; z-index: 50; margin: 0; padding: 0;
   width: min(24rem, 100vw); height: 100dvh; min-height: 0; max-height: none; max-width: none;
   border: 0; background: transparent; overflow: hidden; display: none;
 }
-.codex.side-drawer[open] { display: block; }
-.codex.side-drawer.wide:not(.mobile) { width: min(38rem, 65vw); }
-.codex.side-drawer.left { inset: 0 auto 0 0; }
-.codex.side-drawer::backdrop { background: rgb(0 0 0 / calc(.6 * var(--drawer-fade, 1))); }
-.side-drawer .drawer-scroller { height: 100%; }
-.side-drawer .drawer-sheet {
+:where([data-nox-wiki]) .codex.side-drawer[open] { display: block; }
+:where([data-nox-wiki]) .codex.side-drawer.wide:not(.mobile) { width: min(38rem, 65vw); }
+:where([data-nox-wiki]) .codex.side-drawer.left { inset: 0 auto 0 0; }
+:where([data-nox-wiki]) .codex.side-drawer::backdrop { background: rgb(var(--nox-scrim-rgb, 0 0 0) / calc(.6 * var(--drawer-fade, 1))); }
+:where([data-nox-wiki]) .side-drawer .drawer-scroller { height: 100%; }
+:where([data-nox-wiki]) .side-drawer .drawer-sheet {
   height: 100%; padding: max(1.25rem, env(safe-area-inset-top)) 1.5rem max(1.5rem, env(safe-area-inset-bottom));
-  overflow-y: scroll; scrollbar-gutter: stable; overscroll-behavior-y: contain; background: var(--codex-bg);
-  border-inline-start: 1px solid var(--codex-line); box-shadow: -12px 0 40px #0004;
+  overflow-y: scroll; scrollbar-gutter: stable; overscroll-behavior-y: contain; background: var(--nox-background);
+  border-inline-start: 1px solid var(--nox-border); box-shadow: -12px 0 40px rgb(var(--nox-scrim-rgb, 0 0 0) / .267);
 }
-@supports (scrollbar-gutter: stable) { .side-drawer .drawer-sheet { overflow-y: auto; } }
-.side-drawer.left .drawer-sheet { border-inline-start: 0; border-inline-end: 1px solid var(--codex-line); }
-.side-drawer .drawer-heading { display: flex; align-items: center; gap: .6rem; justify-content: space-between; margin-bottom: 1.5rem; position: sticky; top: -1.25rem; background: var(--codex-bg); z-index: 2; padding-block: .5rem; }
-.side-drawer .drawer-heading h2 { flex: 1; }
-.side-drawer .drawer-back { display: grid; place-items: center; min-height: 44px; min-width: 44px; padding: .5rem; }
-.side-drawer .drawer-heading h2 { margin: 0; font-size: 1rem; font-weight: 600; }
-.side-drawer .drawer-close { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: .5rem; }
-.side-drawer svg { flex-shrink: 0; }
-.side-drawer .drawer-navigation { padding-bottom: 1rem; }
-.side-drawer .drawer-navigation > a { display: block; margin: 0 .6rem 1rem; text-decoration: none; }
-.codex.side-drawer.mobile { --drawer-width: 92dvw; inset: 0; width: 100dvw; }
-.side-drawer.mobile .drawer-scroller {
+@supports (scrollbar-gutter: stable) { :where([data-nox-wiki]) .side-drawer .drawer-sheet { overflow-y: auto; } }
+:where([data-nox-wiki]) .side-drawer.left .drawer-sheet { border-inline-start: 0; border-inline-end: 1px solid var(--nox-border); }
+:where([data-nox-wiki]) .side-drawer .drawer-heading { display: flex; align-items: center; gap: .6rem; justify-content: space-between; margin-bottom: 1.5rem; position: sticky; top: -1.25rem; background: var(--nox-background); z-index: 2; padding-block: .5rem; }
+:where([data-nox-wiki]) .side-drawer .drawer-heading h2 { flex: 1; }
+:where([data-nox-wiki]) .side-drawer .drawer-back { display: grid; place-items: center; min-height: 44px; min-width: 44px; padding: .5rem; }
+:where([data-nox-wiki]) .side-drawer .drawer-heading h2 { margin: 0; font-size: 1rem; font-weight: 600; }
+:where([data-nox-wiki]) .side-drawer .drawer-close { display: grid; place-items: center; min-width: 44px; min-height: 44px; padding: .5rem; }
+:where([data-nox-wiki]) .side-drawer svg { flex-shrink: 0; }
+:where([data-nox-wiki]) .side-drawer .drawer-navigation { padding-bottom: 1rem; }
+:where([data-nox-wiki]) .side-drawer .drawer-navigation > a { display: block; margin: 0 .6rem 1rem; text-decoration: none; }
+:where([data-nox-wiki]) .codex.side-drawer.mobile { --drawer-width: 92dvw; inset: 0; width: 100dvw; }
+:where([data-nox-wiki]) .side-drawer.mobile .drawer-scroller {
   display: grid; grid-template-columns: 100% var(--drawer-width); overflow-x: auto; overflow-y: hidden;
   overscroll-behavior: none; scrollbar-width: none; scroll-snap-type: x mandatory;
 }
-.side-drawer.mobile .drawer-scroller::-webkit-scrollbar { display: none; }
-.side-drawer.mobile .drawer-scroller::before { content: ''; scroll-snap-align: start; }
-.side-drawer.mobile .drawer-sheet { width: var(--drawer-width); scroll-snap-align: end; }
-.side-drawer.mobile.left .drawer-scroller { grid-template-columns: var(--drawer-width) 100%; }
-.side-drawer.mobile.left .drawer-scroller::before { display: none; }
-.side-drawer.mobile.left .drawer-scroller::after { content: ''; scroll-snap-align: end; }
-.side-drawer.mobile.left .drawer-sheet { scroll-snap-align: start; }
-@media (prefers-reduced-motion: reduce) { .side-drawer .drawer-scroller { scroll-behavior: auto; } }
+:where([data-nox-wiki]) .side-drawer.mobile .drawer-scroller::-webkit-scrollbar { display: none; }
+:where([data-nox-wiki]) .side-drawer.mobile .drawer-scroller::before { content: ''; scroll-snap-align: start; }
+:where([data-nox-wiki]) .side-drawer.mobile .drawer-sheet { width: var(--drawer-width); scroll-snap-align: end; }
+:where([data-nox-wiki]) .side-drawer.mobile.left .drawer-scroller { grid-template-columns: var(--drawer-width) 100%; }
+:where([data-nox-wiki]) .side-drawer.mobile.left .drawer-scroller::before { display: none; }
+:where([data-nox-wiki]) .side-drawer.mobile.left .drawer-scroller::after { content: ''; scroll-snap-align: end; }
+:where([data-nox-wiki]) .side-drawer.mobile.left .drawer-sheet { scroll-snap-align: start; }
+@media (prefers-reduced-motion: reduce) { :where([data-nox-wiki]) .side-drawer .drawer-scroller { scroll-behavior: auto; } }
 
-@media (min-width: 1025px) { .codex.side-drawer.mobile.left { --drawer-width: min(24rem, 92dvw); } }
+@media (min-width: 1025px) { :where([data-nox-wiki]) .codex.side-drawer.mobile.left { --drawer-width: min(24rem, 92dvw); } }
 @media (max-width: 1024px) {
-  .side-drawer .drawer-heading { margin-bottom: 1rem; }
-  .side-drawer .drawer-navigation > a { min-height: 44px; display: flex; align-items: center; }
+  :where([data-nox-wiki]) .side-drawer .drawer-heading { margin-bottom: 1rem; }
+  :where([data-nox-wiki]) .side-drawer .drawer-navigation > a { min-height: 44px; display: flex; align-items: center; }
 }
