@@ -16,7 +16,8 @@ body { margin: 0; }
   .standalone-content.actions-visible .mobile-toc { display: block; }
 }
 .header-tools { display: flex; align-items: center; gap: .3rem; margin-left: auto; min-width: 0; }
-.actions-trigger { margin-left: 0; }
+.actions-trigger { margin-left: 0; position: relative; }
+.actions-pending { position: absolute; inset: 7px 7px auto auto; width: 7px; height: 7px; border-radius: 50%; background: #cfb991; box-shadow: 0 0 0 2px #101214; }
 .navigation-trigger { display: none; }
 .skip-link { position: fixed; top: -5rem; left: 1rem; z-index: 100; padding: .8rem; background: #cfb991; color: #151515; }
 .skip-link:focus { top: .5rem; }
@@ -24,11 +25,13 @@ body { margin: 0; }
 @media (min-width: 1025px) and (max-width: 1350px) {
   .standalone-content.actions-visible .codex { grid-template-columns: minmax(0, 1fr); padding-inline: 1.5rem; }
   .standalone-content.actions-visible .sidebar { display: none; }
+  .app-header:is(.actions-open, .navigation-open) .navigation-trigger { display: inline-grid; }
+  .app-header:is(.actions-open, .navigation-open) .brand-subtitle { display: none; }
 }
-@media (max-width: 720px) {
+@media (max-width: 1024px) {
   .app-header { height: 4rem; display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; padding: 0 .5rem; gap: .4rem; }
   .navigation-trigger { display: inline-grid; grid-column: 1; grid-row: 1; }
-  .brand { grid-column: 2; grid-row: 1; justify-self: center; max-width: 100%; font-size: clamp(.9rem, 4vw, 1.1rem); transition: opacity 160ms ease 180ms, visibility 0s linear 180ms; }
+  .brand { grid-column: 2; grid-row: 1; justify-self: center; max-width: 100%; font-size: clamp(.9rem, 3vw, 1.15rem); transition: opacity 160ms ease 180ms, visibility 0s linear 180ms; }
   .brand-name { overflow: hidden; text-overflow: ellipsis; }
   .brand-mark, .brand img { display: none; }
   .app-header.with-actions { grid-template-columns: 44px minmax(0, 1fr) 92px; }
@@ -38,6 +41,6 @@ body { margin: 0; }
   .app-header.search-open .brand { opacity: 0; visibility: hidden; transition-delay: 0s; }
   .actions-trigger { margin: 0; }
 }
-@media (max-width: 720px) and (prefers-reduced-motion: reduce) {
+@media (max-width: 1024px) and (prefers-reduced-motion: reduce) {
   .brand { transition: none; }
 }

@@ -140,7 +140,7 @@
   onDestroy(() => { destroyed = true; clearTimeout(timer); });
 </script>
 
-<div class="nox-panel" aria-busy={busy}>
+<div class="nox-panel" class:selecting={stage === 'notes' || stage === 'review'} aria-busy={busy}>
   <div class="nox-shortcuts">
     <div class="nox-step-heading"><button type="button" class="quiet nox-step-back" onclick={back} aria-label={t('nox.backStep')} title={t('nox.backStep')} disabled={!canGoBack || busy || working}><Icon name="left" size={18} /></button><h3>{t(titles[stage])}</h3></div>
     {#if settings.hasKey && stage !== 'connection'}<button type="button" class="quiet nox-settings" onclick={() => { connectionReturnStage = stage as 'vaults' | 'notes' | 'review'; stage = 'connection'; error = null; }} aria-label={t('nox.settings')} title={t('nox.settings')} disabled={busy || working}><Icon name="settings" /></button>{/if}

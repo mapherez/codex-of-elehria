@@ -107,7 +107,12 @@
 {#snippet actionButton(name: 'edit' | 'save' | 'publish' | 'history' | 'move' | 'delete' | 'create' | 'deleted' | 'nox' | 'cancel', label: string, handler: () => void, disabled = false, primary = false, danger = false)}
   <button class="action-row" class:primary class:danger {disabled} onclick={handler}><ActionIcon {name} /><span>{label}</span></button>
 {/snippet}
+{#snippet feedback()}
+  {#if error}<p class="notice error" role="alert">{t(error.code, error.params)}</p>{/if}
+  {#if notice}<p class="save-notice" role="status">{notice}</p>{/if}
+{/snippet}
 {#snippet actions()}
+  {#if actionsOpen}{@render feedback()}{/if}
   <div hidden={drawerView !== 'nox'}><NoxSyncPanel {client} {t} active={drawerView === 'nox'} onExit={() => drawerView = 'actions'}
     onImported={() => refreshKey++}
     onOpen={path => runAction(() => navigate(path))} /></div>
@@ -126,6 +131,7 @@
       </div>
     {/if}
     {#if view === 'edit'}
+      {#if !original && dirty}<p class="publication-status pending">{t('editor.pending')}</p>{/if}
       <div class="drawer-action-group">
         <h3>{t('admin.pageActions')}</h3>
         {@render actionButton('save', t(editorControls?.busy ? 'editor.saving' : 'action.save'), () => { const controls = editorControls; if (controls) runAction(controls.save); }, !editorControls || editorControls.busy, true)}
@@ -155,8 +161,7 @@
   {/if}
 {/snippet}
 {#snippet toolbar(_page: PageResponse | null)}
-  {#if error}<p class="notice error" role="alert">{t(error.code, error.params)}</p>{/if}
-  {#if notice}<p class="save-notice" role="status">{notice}</p>{/if}
+  {#if !actionsOpen}{@render feedback()}{/if}
 {/snippet}
 {#snippet workspace()}
   {#if view === 'edit'}
@@ -170,8 +175,8 @@
 {/snippet}
 
 <AppShell searchQuery={route.search ?? undefined} searchRefreshKey={searchRefreshKey + refreshKey} onSearch={search} onSearchNavigate={navigate} {config} {t} {navigationId} bind:navigationOpen bind:actionsOpen {actions} onActionsClosed={actionsClosed} onHome={() => navigate('home.md')}
-  actionsTitle={drawerTitle} actionsWide={drawerView === 'nox' || drawerView === 'history'} onActionsBack={drawerView === 'actions' ? undefined : () => { drawerView = drawerView === 'history' ? historyParent : 'actions'; }}>
-  <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} toolbar={error || notice ? toolbar : undefined} {refreshKey}
+  actionsPending={view === 'edit' && dirty} actionsTitle={drawerTitle} actionsWide={drawerView === 'nox' || drawerView === 'history'} onActionsBack={drawerView === 'actions' ? undefined : () => { drawerView = drawerView === 'history' ? historyParent : 'actions'; }}>
+  <CodexReader apiBase={client.apiBase} basePath={config.basePath} path={route.path} hash={route.hash} {t} toolbar={(error || notice) && !actionsOpen ? toolbar : undefined} {refreshKey}
     onImagePick={repairImage} showLinkWarnings
     {navigationId} bind:navigationOpen
     body={view === 'edit' ? workspace : route.search === null ? undefined : searchResults} onNavigate={navigate}

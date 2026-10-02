@@ -122,3 +122,22 @@ test('Public searches exact published versions while Admin searches saved drafts
   assert.equal((await publicApp.request('/knowledge/search?q=draftwordonly')).status, 200);
   assert.equal((await publicApp.request('/knowledge/api/admin/pages')).status, 404);
 });
+
+test('heading matches include nearby text without changing their occurrence or leaking another section', () => {
+  const index = new SearchIndex(t);
+  const publication = collection([
+    { path: 'World/Humans.md', content: '# Humans\n\nPeople who settled along the northern river.\n\n## Culture\nShared traditions.' },
+    { path: 'People/Humans.md', content: '# Humans\n\n## Culture\nA separate section.' },
+    { path: 'Empty/Humans.md', content: '# Humans' }
+  ]);
+  const result = index.search(publication, 'humans');
+  assert.equal(result.total, 3);
+  const withContext = result.results.find(page => page.path === 'World/Humans.md')!;
+  assert.match(withContext.snippet.map(segment => segment.text).join(''), /northern river/);
+  assert.deepEqual(withContext.snippet.filter(segment => segment.match).map(segment => segment.text), ['Humans']);
+  assert.equal(withContext.fragment, '#search-s0~0~6');
+  const nextSection = result.results.find(page => page.path === 'People/Humans.md')!;
+  assert.equal(nextSection.snippet.map(segment => segment.text).join(''), 'Humans');
+  const empty = result.results.find(page => page.path === 'Empty/Humans.md')!;
+  assert.equal(empty.snippet.map(segment => segment.text).join(''), 'Humans');
+});

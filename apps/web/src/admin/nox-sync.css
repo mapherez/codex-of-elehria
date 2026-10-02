@@ -2,7 +2,7 @@
 .codex .nox-intro { margin-top: 0; color: var(--codex-muted); line-height: 1.6; }
 .codex .import-steps { list-style: none; margin: 1.5rem 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
 .codex .import-steps button { border: 0; padding: .3rem 0; background: transparent; color: inherit; text-align: start; font-size: inherit; display: grid; gap: .4rem; min-height: 48px; width: 100%; }
-.codex .import-steps li { color: var(--codex-muted); font-size: .68rem; display: grid; gap: .4rem; }
+.codex .import-steps li { color: var(--codex-muted); font-size: .75rem; display: grid; gap: .4rem; }
 .codex .import-steps span { display: grid; place-items: center; width: 1.7rem; height: 1.7rem; border: 1px solid var(--codex-line); border-radius: 50%; font-size: .75rem; }
 .codex .import-steps .current { color: var(--codex-accent); }
 .codex .import-steps .current span { background: #cfb9911a; border-color: var(--codex-accent); }
@@ -24,7 +24,7 @@
 .codex .import-state-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .codex .import-state-dot.unchanged { background: #dcc15b; }
 .codex .import-state-dot.problem { background: #ed8181; }
-.codex .import-state-legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .65rem; color: var(--codex-muted); padding-block: .75rem; }
+.codex .import-state-legend { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font-size: .75rem; color: var(--codex-muted); padding-block: .75rem; }
 .codex .import-state-legend > span { display: flex; align-items: center; gap: .4rem; }
 .codex .import-state-description { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .codex .import-tree { list-style: none; padding: 0; margin: 0; }
@@ -46,7 +46,7 @@
 .codex .import-review.conflict { border-color: #8d7750; }
 .codex .import-review header { display: flex; flex-wrap: wrap; gap: .6rem; align-items: start; }
 .codex .import-review strong { flex: 1; font-size: .85rem; overflow-wrap: anywhere; }
-.codex .import-status { font-size: .7rem; color: var(--codex-accent); padding: .2rem .5rem; border-radius: 1rem; background: #cfb99112; }
+.codex .import-status { font-size: .75rem; color: var(--codex-accent); padding: .2rem .5rem; border-radius: 1rem; background: #cfb99112; }
 .codex .import-warning { font-size: .8rem; color: var(--codex-accent); overflow-wrap: anywhere; }
 .codex .import-review summary { cursor: pointer; margin-top: 1rem; }
 .codex .import-review pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow: auto; font-size: .75rem; padding: .75rem; background: #0003; border-radius: .4rem; }
@@ -59,3 +59,19 @@
 .codex .import-results span { flex: 1; overflow-wrap: anywhere; }
 .codex .import-resume { margin-bottom: 1rem; }
 @media (prefers-reduced-motion: reduce) { .codex .import-tree .tree-chevron { transition: none; } }
+
+.codex .import-note-row { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr); align-items: center; gap: .7rem; min-height: 48px; }
+.codex .import-note-row.with-state { grid-template-columns: 1.1rem 44px minmax(0, 1fr); gap: .35rem; }
+.codex .import-note-row label { min-width: 0; overflow-wrap: anywhere; }
+.codex button.import-state-trigger { display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; border-radius: .4rem; }
+.codex button.import-state-trigger:hover, .codex button.import-state-trigger[aria-expanded="true"] { background: #ffffff07; }
+.codex .import-state-detail { margin: 0 0 .6rem; padding: .5rem .7rem; border-inline-start: 2px solid var(--codex-accent); background: #ffffff03; color: var(--codex-muted); font-size: .8rem; overflow-wrap: anywhere; }
+@media (max-width: 1024px) {
+  .codex .nox-panel.selecting .nox-intro { display: none; }
+  .codex .nox-shortcuts { margin-bottom: .35rem; }
+  .codex .import-steps { margin-block: .75rem; }
+  .codex .vault-context { margin-block: .5rem; }
+  .codex .filter-label { margin-top: .65rem; }
+  .codex .import-state-legend { padding-block: .5rem; }
+  .codex .import-review :is(summary, button), .codex .import-resume, .codex .import-results button { min-height: 44px; }
+}

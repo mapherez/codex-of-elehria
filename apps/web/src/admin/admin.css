@@ -6,7 +6,7 @@
 .codex .editor-view-controls { display: inline-flex; align-items: center; gap: .25rem; padding: .25rem; margin-top: 1.2rem; border: 1px solid var(--codex-line); border-radius: .65rem; background: #ffffff03; }
 .codex .editor-view-controls button { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; border-color: transparent; border-radius: .4rem; background: transparent; color: var(--codex-muted); }
 .codex .editor-view-controls button.active { color: var(--codex-accent); background: #cfb99116; border-color: #cfb99138; }
-.codex .editor-preview { min-height: 58dvh; margin-top: 1rem; padding: 1.4rem; border: 1px solid var(--codex-line); border-radius: .4rem; background: #ffffff02; }
+.codex .editor-preview { min-height: 58dvh; margin-top: 1rem; padding: 0; border: 0; background: transparent; }
 .codex .editor-preview .prose > :first-child { margin-top: 0; }
 .codex :where(.editor,.admin-dialog,.compare-form) label { display: block; font-size: .8rem; font-weight: 600; margin-top: 1.3rem; margin-bottom: .5rem; }
 .codex :where(input,textarea,select) { color: var(--codex-text); background: #14181e; border: 1px solid #65707f; border-radius: .4rem; padding: .7rem .85rem; max-width: 100%; }
@@ -75,3 +75,10 @@
 .codex.side-drawer .history-list li > div { min-width: 0; overflow-wrap: anywhere; }
 .codex.side-drawer .version-controls code { overflow-wrap: anywhere; }
 @media (prefers-reduced-motion: reduce) { .codex button.action-row { transition: none; } }
+
+@media (max-width: 1024px) {
+  .codex .editor :is(input, textarea), .codex .compare-form select { font-size: 1rem; }
+  .codex .field-hint, .codex .publication-status, .codex .history-list small, .codex .pending-pages .publication-status { font-size: .8rem; }
+  .codex .history-list button, .codex .version-controls button, .codex .compare-form button { min-height: 44px; }
+}
+.codex.side-drawer .drawer-sheet > .save-notice { margin-block: 0 1rem; }

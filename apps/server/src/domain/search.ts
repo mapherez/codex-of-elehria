@@ -137,9 +137,10 @@ export class SearchIndex {
     const phrase = fold(query).text.trim(); const terms = [...new Set(phrase.split(' ').filter(Boolean))];
     const ranked: { result: SearchResult; score: number }[] = [];
     if (terms.length) for (const page of publication.pages) {
+      const blocks = this.page(page).blocks;
       const found = new Set<string>();
       let best: { block: Block; ranges: Range[]; score: number } | undefined;
-      for (const block of this.page(page).blocks) {
+      for (const block of blocks) {
         const matching = terms.filter(term => block.folded.text.includes(term));
         const hidden = block.references.filter(reference => terms.some(term => reference.normalized.includes(term)));
         for (const term of matching) found.add(term);
@@ -152,10 +153,22 @@ export class SearchIndex {
         if (!best || score > best.score) best = { block, ranges, score };
       }
       if (found.size !== terms.length || !best) continue;
+      let snippet = excerpt(best.block.text, best.ranges);
+      if (best.block.kind.startsWith('h')) {
+        const following = blocks[blocks.indexOf(best.block) + 1];
+        if (following && !following.kind.startsWith('h')) {
+          const shift = best.block.text.length + 1;
+          const contextRanges = rangesFor(following.folded, terms).concat(
+            following.references.filter(reference => terms.some(term => reference.normalized.includes(term)))
+              .map(({ start, end }) => ({ start, end }))
+          ).map(({ start, end }) => ({ start: start + shift, end: end + shift }));
+          snippet = excerpt(best.block.text + '\n' + following.text, [...best.ranges, ...contextRanges].sort((a, b) => a.start - b.start || b.end - a.end));
+        }
+      }
       const occurrence = best.ranges[0]!;
       ranked.push({ score: best.score, result: {
         id: page.id, path: page.path, revision: page.revision, name: page.path.split('/').at(-1)!.replace(/\.md$/i, ''),
-        snippet: excerpt(best.block.text, best.ranges),
+        snippet,
         fragment: '#search-' + best.block.anchor + '~' + occurrence.start + '~' + occurrence.end
       } });
     }

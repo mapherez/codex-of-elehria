@@ -15,6 +15,7 @@
   let response = $state<SearchResponse | null>(null);
   let error = $state<ApiError['error'] | null>(null);
   let loading = $state(false);
+  let panel = $state<HTMLElement>();
   let root: HTMLElement; let input = $state<HTMLInputElement>(); let trigger = $state<HTMLButtonElement>();
   $effect(() => { if (routeQuery !== undefined) query = routeQuery; });
   $effect(() => {
@@ -30,6 +31,29 @@
         .finally(() => { if (!controller.signal.aborted) loading = false; });
     }, 180);
     return () => { clearTimeout(timer); controller.abort(); };
+  });
+  $effect(() => {
+    if (!open || !panel) return;
+    const results = panel;
+    const viewport = window.visualViewport;
+    const update = () => {
+      const bottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+      results.style.setProperty('--search-available-height', Math.max(0, bottom - results.getBoundingClientRect().top - 8) + 'px');
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(root);
+    window.addEventListener('resize', update);
+    window.addEventListener('scroll', update, { passive: true });
+    viewport?.addEventListener('resize', update);
+    viewport?.addEventListener('scroll', update);
+    update();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', update);
+      window.removeEventListener('scroll', update);
+      viewport?.removeEventListener('resize', update);
+      viewport?.removeEventListener('scroll', update);
+    };
   });
   function clear() { query = ''; input?.focus(); }
   async function expand() { onOpen(); open = true; await tick(); input?.focus(); }
@@ -65,7 +89,7 @@
     </form>
   </div>
     {#if open && query.trim()}
-      <nav id={uid + '-results'} class="quick-search-panel" aria-label={t('search.results')} aria-busy={loading}>
+      <nav bind:this={panel} id={uid + '-results'} class="quick-search-panel" aria-label={t('search.results')} aria-busy={loading}>
         {#if loading}<p class="search-status">{t('search.loading')}</p>
         {:else if error}<p class="search-status" role="alert">{t(error.code, error.params)}</p>
         {:else if response}

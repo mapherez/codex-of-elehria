@@ -4,15 +4,16 @@
   import './drawer.css';
   import Icon from './Icon.svelte';
 
-  let { open = $bindable(false), id, title, side = 'right', mobileOnly = false, t, children, onClosed, onBack, wide = false }: {
-    open?: boolean; id: string; title: string; side?: 'left' | 'right'; mobileOnly?: boolean;
+  let { open = $bindable(false), id, title, side = 'right', alwaysModal = false, t, children, onClosed, onBack, wide = false }: {
+    open?: boolean; id: string; title: string; side?: 'left' | 'right'; alwaysModal?: boolean;
     t: Translator; children: Snippet; onClosed?: () => void; onBack?: () => void; wide?: boolean;
   } = $props();
   let dialog: HTMLDialogElement;
   let scroller: HTMLDivElement;
   let sheet: HTMLDivElement;
   let mounted = $state(false);
-  let mobile = $state(false);
+  let compact = $state(false);
+  const mobile = $derived(compact || alwaysModal);
   let modal = false;
   let opening = false;
   let closing = false;
@@ -39,7 +40,8 @@
     opening = false; closing = false; armed = false;
     if (notify) {
       open = false;
-      previousFocus?.focus({ preventScroll: true });
+      if (previousFocus?.isConnected && previousFocus.getClientRects().length) previousFocus.focus({ preventScroll: true });
+      else document.querySelector<HTMLElement>('.brand')?.focus({ preventScroll: true });
       onClosed?.();
     }
   }
@@ -92,8 +94,8 @@
     if (modal && !sheet.contains(event.target as Node)) open = false;
   }
   onMount(() => {
-    const viewport = matchMedia('(max-width: 720px)');
-    const resize = () => { mobile = viewport.matches; };
+    const viewport = matchMedia('(max-width: 1024px)');
+    const resize = () => { compact = viewport.matches; };
     resize(); viewport.addEventListener('change', resize);
     const observer = new IntersectionObserver(entries => {
       if (!modal || !dialog.open || opening) return;
@@ -120,10 +122,9 @@
   $effect(() => {
     if (!mounted) return;
     if (dialog.open && modal !== mobile) {
-      if (!open || (mobileOnly && !mobile)) { finish(); return; }
+      if (!open) { finish(); return; }
       finish(false);
     }
-    if (mobileOnly && !mobile && open) { open = false; return; }
     if (open) {
       if (!dialog.open) void show();
     } else if (dialog.open) void hide();
@@ -139,8 +140,8 @@
 
 <dialog {id} class="codex side-drawer" class:left={side === 'left'} class:mobile bind:this={dialog}
   class:wide
-  aria-labelledby={id + '-title'} oncancel={event => { event.preventDefault(); open = false; }}>
-  <div class="drawer-scroller" bind:this={scroller} onscroll={fade} onclick={dismissBackdrop} role="presentation">
+  aria-labelledby={id + '-title'} onclick={dismissBackdrop} oncancel={event => { event.preventDefault(); open = false; }}>
+  <div class="drawer-scroller" bind:this={scroller} onscroll={fade} role="presentation">
     <div class="drawer-sheet" bind:this={sheet}>
       <div class="drawer-heading">
         {#if onBack}<button type="button" class="drawer-back quiet" onclick={onBack} aria-label={t('action.back')}><Icon name="back" /></button>{/if}

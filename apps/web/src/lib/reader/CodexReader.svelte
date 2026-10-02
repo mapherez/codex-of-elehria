@@ -131,7 +131,7 @@
     </aside>
   {/if}
 </div>
-<Drawer id={navigationId || uid + '-navigation'} title={t('nav.title')} side="left" mobileOnly {t} bind:open={navigationOpen} onClosed={navigationClosed}>
+<Drawer id={navigationId || uid + '-navigation'} title={t('nav.title')} side="left" alwaysModal {t} bind:open={navigationOpen} onClosed={navigationClosed}>
   <div class="drawer-navigation">
     <a href={pageUrl('home.md', basePath)} onclick={event => { event.preventDefault(); navigate('home.md'); }}>{t('nav.home')}</a>
     <NavigationTree nodes={model.navigation} activePath={model.page?.path || path} {basePath} {t} onNavigate={navigate} showTitle={false} />

@@ -8,11 +8,11 @@
   import Icon from '../lib/Icon.svelte';
   import './standalone.css';
   let { config, t, children, onHome, navigationOpen = $bindable(false), navigationId,
-    actionsOpen = $bindable(false), actions, onActionsClosed, actionsTitle, onActionsBack, actionsWide = false, searchQuery, searchRefreshKey = 0, onSearch, onSearchNavigate }: {
+    actionsOpen = $bindable(false), actions, onActionsClosed, actionsTitle, onActionsBack, actionsWide = false, actionsPending = false, searchQuery, searchRefreshKey = 0, onSearch, onSearchNavigate }: {
     config: PublicConfig; t: Translator; children: Snippet; onHome: () => void;
     searchQuery?: string; searchRefreshKey?: number; onSearch: (query: string) => boolean | void; onSearchNavigate: (path: string, hash: string) => boolean | void;
     navigationOpen?: boolean; navigationId: string; actionsOpen?: boolean; actions?: Snippet; onActionsClosed?: () => void;
-    actionsTitle?: string; onActionsBack?: () => void; actionsWide?: boolean;
+    actionsTitle?: string; onActionsBack?: () => void; actionsWide?: boolean; actionsPending?: boolean;
   } = $props();
   const uid = $props.id();
   const actionsId = uid + '-actions';
@@ -21,7 +21,7 @@
 </script>
 
 <a class="skip-link" href="#content">{t('app.skip')}</a>
-<header class="app-header" class:search-open={searchOpen} class:with-actions={Boolean(actions)}>
+<header class="app-header" class:search-open={searchOpen} class:with-actions={Boolean(actions)} class:actions-open={actionsOpen} class:navigation-open={navigationOpen}>
   <button type="button" class="header-control navigation-trigger" aria-label={t(navigationOpen ? 'nav.close' : 'nav.open')}
     aria-expanded={navigationOpen} aria-controls={navigationId} onclick={() => { actionsOpen = false; navigationOpen = !navigationOpen; }}>
     <Icon name="menu" size={22} />
@@ -36,9 +36,10 @@
     <HeaderSearch apiBase={config.basePath + '/api'} basePath={config.basePath} {t} bind:open={searchOpen} routeQuery={searchQuery} refreshKey={searchRefreshKey}
       onOpen={() => { actionsOpen = false; navigationOpen = false; }} onNavigate={onSearchNavigate} onShowAll={onSearch} />
   {#if actions}
-    <button type="button" class="header-control actions-trigger" aria-label={t(actionsOpen ? 'admin.close' : 'admin.open')}
+    <button type="button" class="header-control actions-trigger" aria-label={actionsPending ? t('admin.pendingActions', { action: t(actionsOpen ? 'admin.close' : 'admin.open') }) : t(actionsOpen ? 'admin.close' : 'admin.open')}
       aria-expanded={actionsOpen} aria-controls={actionsId} onclick={() => { navigationOpen = false; actionsOpen = !actionsOpen; }}>
       <Icon name="left" size={22} />
+      {#if actionsPending}<span class="actions-pending" aria-hidden="true"></span>{/if}
     </button>
   {/if}
   </div>
