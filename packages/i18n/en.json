@@ -218,5 +218,20 @@
   "search.countQuery": "{{count}} results for “{{query}}”",
   "search.empty": "No results for “{{query}}”.",
   "search.more": "Load more results",
-  "search.clear": "Clear search"
+  "search.clear": "Clear search",
+  "relationships.title": "Related notes",
+  "relationships.details": "Links / Backlinks",
+  "relationships.links": "Links",
+  "relationships.backlinks": "Backlinks",
+  "relationships.unresolved": "Unresolved links",
+  "relationships.count": "{{outgoing}} links · {{incoming}} backlinks",
+  "relationships.none": "None",
+  "relationships.empty": "No connected notes.",
+  "relationships.intoHeading": "Into {{heading}}",
+  "relationships.zoomIn": "Zoom in",
+  "relationships.zoomOut": "Zoom out",
+  "relationships.fit": "Fit all notes",
+  "relationships.chart": "Relations of {{name}}",
+  "relationships.description": "Arrows show link direction. Zoom and drag to explore. Open Links / Backlinks to navigate to notes and headings using the keyboard.",
+  "relationships.graphUnavailable": "The graph could not be displayed. Use the links below."
 }

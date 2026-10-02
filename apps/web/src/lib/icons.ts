@@ -22,7 +22,12 @@ import CodeIcon from 'phosphor-svelte/lib/CodeIcon';
 import MagnifyingGlassIcon from 'phosphor-svelte/lib/MagnifyingGlassIcon';
 import EyeIcon from 'phosphor-svelte/lib/EyeIcon';
 
+import PlusIcon from 'phosphor-svelte/lib/PlusIcon';
+import MinusIcon from 'phosphor-svelte/lib/MinusIcon';
+import CornersOutIcon from 'phosphor-svelte/lib/CornersOutIcon';
+
 export const icons = {
+  zoomIn: PlusIcon, zoomOut: MinusIcon, fit: CornersOutIcon,
   edit: PencilSimpleIcon, save: FloppyDiskIcon, publish: UploadSimpleIcon, history: ClockCounterClockwiseIcon,
   move: ArrowsOutCardinalIcon, delete: TrashIcon, create: FilePlusIcon, deleted: ArchiveIcon,
   nox: ArrowsClockwiseIcon, cancel: XIcon, menu: ListIcon, left: CaretLeftIcon, right: CaretRightIcon,

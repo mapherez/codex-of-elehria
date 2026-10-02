@@ -121,7 +121,7 @@ export class MarkdownRenderer {
         if (target) {
           if (/\.md$/i.test(target.path) && child.type === 'link_open') {
             if (notes && !notes.hasPath(target.path)) {
-              child.tag = 'span'; child.attrs = null; inertLink = true;
+              child.tag = 'span'; child.attrs = [['data-note-path', target.path], ['data-note-suffix', target.suffix]]; inertLink = true;
               continue;
             }
             child.attrSet('href', pageUrl(target.path, this.basePath) + target.suffix);

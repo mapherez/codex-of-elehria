@@ -29,6 +29,13 @@ export interface Publication {
   navigation: NavigationNode[]; pages: PublishedPage[];
   importedMedia?: string[];
 }
+export interface RelationshipNode { id: string; path: string; name: string; incoming: number }
+export interface RelationshipDestination { fragment: string; heading?: string }
+export interface RelationshipEdge { sourceId: string; targetId: string; destinations: RelationshipDestination[] }
+export interface UnresolvedRelationship { reference: string; reason: 'missing' | 'ambiguous' | 'headingMissing'; targetId?: string }
+export interface RelationshipsResponse { revision: string; centerId: string; nodes: RelationshipNode[]; edges: RelationshipEdge[]; unresolved?: UnresolvedRelationship[] }
+export const relationshipsQuerySchema = z.object({ path: z.string().min(1).max(2048).default('home.md') });
+
 export interface SearchSegment { text: string; match: boolean }
 export interface SearchResult { id: string; path: string; revision: string; name: string; snippet: SearchSegment[]; fragment: string }
 export interface SearchResponse { query: string; revision: string; total: number; offset: number; limit: number; results: SearchResult[] }

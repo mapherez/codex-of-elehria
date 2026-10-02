@@ -7,6 +7,7 @@
   import NavigationTree from './NavigationTree.svelte';
   import TableOfContents from './TableOfContents.svelte';
   import { scrollToSearchOccurrence } from '../search/search-occurrence';
+  import RelationshipsPanel from '../relationships/RelationshipsPanel.svelte';
   import Article from './Article.svelte';
   import Drawer from '../Drawer.svelte';
   import Icon from '../Icon.svelte';
@@ -120,10 +121,13 @@
       <Article page={model.page} {basePath} {apiBase} {t} {onImagePick} onNavigate={navigate} onHeading={jump} onElement={element => { article = element; }} />
     {/if}
   </main>
-  {#if model.page?.headings.length && !body && !model.error}
+  {#if model.page && !body && !model.error}
     <aside class="desktop-toc">
-      <div class="toc-title">{t('toc.title')}</div>
-      <TableOfContents headings={model.page.headings} active={activeHeading} {t} onSelect={jump} />
+      <RelationshipsPanel page={model.page} {apiBase} {basePath} {t} onNavigate={navigate} />
+      {#if model.page.headings.length}
+        <div class="toc-title">{t('toc.title')}</div>
+        <TableOfContents headings={model.page.headings} active={activeHeading} {t} onSelect={jump} />
+      {/if}
     </aside>
   {/if}
 </div>

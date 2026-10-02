@@ -136,6 +136,14 @@ Missing or ambiguous destinations, including missing headings, remain plain text
 
 Browser URLs omit `.md`: `races/Humans.md` is served at `/wiki/races/Humans`, while `home.md` remains `/`. Normal Markdown links such as `[Humanity](races/Humans.md)` also generate these URLs. Direct navigation and refresh work; legacy URLs with `.md` and moved-page aliases redirect to the current clean URL. Configured URL prefixes are preserved. Internal file paths and API paths still include `.md`.
 
+## Relationships
+
+The desktop right sidebar shows a local graph above **On this page**, including notes without headings. The current note stays at the center; arrows show outgoing links and backlinks. Hover to identify a note, click it to open it, and use wheel/gesture zoom, drag to pan, or the zoom and fit controls. Node sizes reflect the number of distinct notes linking to them. All direct neighbours are included; second-level relationships are not drawn.
+
+Open **Links / Backlinks** for keyboard-accessible links grouped by note and heading. Admin also shows missing or ambiguous references and invalid headings, with dashed graph connections. Code examples, images, external links and references within the same note do not create relationships. Reduced-motion preferences show the final layout without animation. The graph and list are suspended when the right sidebar is hidden, including mobile and the desktop actions drawer.
+
+`GET /api/relationships?path=home.md` (under the configured URL prefix) returns the visible snapshot revision, central stable note ID, local nodes, directed edges and their heading destinations. Admin includes unresolved references; Public uses only published notes and omits unresolved references. The reusable in-memory index keeps all notes, including isolated notes, and reuses extraction when their rendered HTML is unchanged. Live updates preserve existing positions and the camera where possible. No extra database, stored layout, state reset or collection republication is required. A full-collection graph page is reserved for a later update.
+
 ## Search
 
 The header search finds text throughout notes, ignoring case and accents (for example, `gut` matches `güt`). All words must occur in a note; complete phrases rank first. Both visible aliases and Obsidian link targets are searchable. Image references and filenames are excluded unless a note link explicitly refers to that name.

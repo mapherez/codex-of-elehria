@@ -19,7 +19,8 @@ import { securityHeaders, localAccess, errorHandler } from './security';
 import { NoxSync } from '../services/nox-sync';
 import { noxRoutes } from './nox-routes';
 import { SearchIndex } from '../domain/search';
-import { searchQuerySchema } from '../../../../packages/contracts';
+import { RelationshipIndex } from '../domain/relationships';
+import { searchQuerySchema, relationshipsQuerySchema } from '../../../../packages/contracts';
 import { isImportedImage } from '../domain/imported-images';
 
 const mediaTypes: Record<string, string> = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif', '.svg': 'image/svg+xml' };
@@ -51,6 +52,7 @@ export async function createApplication(config: RuntimeConfig) {
   app.use(express.json({ limit: config.site.maxPageBytes * 6 + 4096 }));
   const routes = Router();
   const search = new SearchIndex(t);
+  const relationships = new RelationshipIndex(t);
   app.use(config.site.basePath || '/', routes);
 
   routes.get('/healthz', (_req, res) => res.status(reader.current ? 200 : 503).json({ ready: Boolean(reader.current) }));
@@ -73,6 +75,11 @@ export async function createApplication(config: RuntimeConfig) {
     const input = searchQuerySchema.parse(req.query);
     await reader.refresh();
     res.json(search.search(reader.require(), input.q, input.offset, input.limit));
+  });
+  routes.get('/api/relationships', async (req, res) => {
+    const input = relationshipsQuerySchema.parse(req.query);
+    await reader.refresh();
+    res.json(relationships.local(reader.require(), input.path, config.mode === 'admin'));
   });
   const clients = new Set<Response>();
   const broadcast = (revision: string): void => {

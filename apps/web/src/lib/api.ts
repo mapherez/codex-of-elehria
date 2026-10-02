@@ -1,4 +1,4 @@
-import type { SearchResponse, ApiError, NavigationResponse, PageResponse, PublicConfig } from '../../../../packages/contracts';
+import type { RelationshipsResponse, SearchResponse, ApiError, NavigationResponse, PageResponse, PublicConfig } from '../../../../packages/contracts';
 import type { ErrorCode } from '../../../../packages/i18n';
 
 export class ApiClientError extends Error {
@@ -26,6 +26,9 @@ export class WikiClient {
   }
   search(query: string, offset = 0, limit = 10, signal?: AbortSignal): Promise<SearchResponse> {
     return this.request('/search?' + new URLSearchParams({ q: query, offset: String(offset), limit: String(limit) }), { signal });
+  }
+  relationships(path: string, signal?: AbortSignal): Promise<RelationshipsResponse> {
+    return this.request('/relationships?' + new URLSearchParams({ path }), { signal });
   }
   config(): Promise<PublicConfig> { return this.request('/config'); }
   navigation(signal?: AbortSignal): Promise<NavigationResponse> { return this.request('/navigation', { signal }); }

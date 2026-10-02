@@ -97,6 +97,7 @@
   border-right: 1px solid var(--codex-line);
   padding: 2.8rem 1.1rem 1.5rem 1.5rem;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
   scrollbar-color: #3b424d transparent;
 }
 .codex .sidebar-label {
@@ -319,6 +320,7 @@
   overflow-y: auto;
   margin-top: 6.25rem;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
 }
 .codex .toc-title {
   font-size: 0.75rem;
