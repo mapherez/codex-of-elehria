@@ -44,8 +44,8 @@ jobs:
           cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run check
-      - run: npm test
       - run: npm run build
+      - run: npm test
 
   publish:
     needs: validate
